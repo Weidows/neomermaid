@@ -7,11 +7,16 @@ themes, palettes and real exports.
 
 ```bash
 # from a checkout
-npm run build:vscode
+npm run package:vsix
 code --install-extension packages/vscode/neomermaid-vscode-0.1.0.vsix
 
-# or `npm run build:vscode && code --extensionDevelopmentPath=<repo>/packages/vscode`
+# or run it without packaging
+npm run build:vscode && code --extensionDevelopmentPath=<repo>/packages/vscode
 ```
+
+Release builds attach the same `.vsix` to every
+[GitHub release](https://github.com/Weidows/neomermaid/releases), so installing
+without a checkout is one download.
 
 ## Use
 

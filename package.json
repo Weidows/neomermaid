@@ -19,6 +19,7 @@
     "build:core": "npm run build --workspace @neomermaid/core",
     "build:cli": "npm run build --workspace @neomermaid/cli",
     "build:vscode": "npm run build --workspace neomermaid-vscode",
+    "package:vsix": "npm run build:vscode && npm run package --workspace neomermaid-vscode",
     "build:demo": "npm run build --workspace @neomermaid/demo",
     "demo": "npm run dev --workspace @neomermaid/demo",
     "examples": "node scripts/write-examples.mjs",

@@ -141,13 +141,13 @@
   },
   "scripts": {
     "build": "node ../../scripts/build-vscode.mjs",
-    "package": "vsce package --no-dependencies",
+    "package": "npx --yes @vscode/vsce@latest package --no-dependencies --out neomermaid-vscode-0.1.0.vsix",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "smoke": "node scripts/webview-smoke.mjs",
     "smoke:host": "node scripts/host-smoke.mjs",
     "verify": "npm run typecheck && npm run build && npm run smoke:host && npm run smoke"
   },
-  "files": ["dist", "media", "language-configuration.json", "README.md"],
+  "files": ["dist", "media", "language-configuration.json", "README.md", "LICENSE"],
   "dependencies": {
     "@neomermaid/core": "0.1.0"
   },

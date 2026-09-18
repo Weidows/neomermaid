@@ -58,18 +58,18 @@ jobs:
         run: node scripts/build-vscode.mjs
 
       - name: Package the .vsix
-        run: npx --yes @vscode/vsce@latest package --no-dependencies --allow-missing-repository --out neomermaid-vscode.vsix
-        working-directory: packages/vscode
+        run: npm run package --workspace neomermaid-vscode
 
       - name: Create the GitHub release with the .vsix attached
         uses: softprops/action-gh-release@v2
         with:
-          files: packages/vscode/neomermaid-vscode.vsix
+          files: packages/vscode/neomermaid-vscode-0.1.0.vsix
           generate_release_notes: true
           body: |
             ### Install
 
-            - VS Code extension: download `neomermaid-vscode.vsix` below, then
-              `code --install-extension neomermaid-vscode.vsix`
+            - VS Code extension: download `neomermaid-vscode-0.1.0.vsix` below, then
+              `code --install-extension neomermaid-vscode-0.1.0.vsix`
             - CLI / SDK: `npm install @neomermaid/cli` (or `@neomermaid/core`)
-            - Live demo: https://weidows.github.io/neomermaid/
+            - Live demo: https://blog.weidows.tech/neomermaid/
+            - Docs: [theming](docs/theming.md) · [CLI](docs/cli.md) · [SDK](docs/api.md) · [VS Code](docs/vscode.md)
