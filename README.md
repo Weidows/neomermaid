@@ -48,7 +48,7 @@ Palettes: `dracula` · `one-dark-pro` · `nord` · `gruvbox-dark` · `catppuccin
 |---|---|---|
 | **VS Code extension** | `code --install-extension neomermaid-vscode-0.1.0.vsix` | Live preview beside your `.mmd` file, theme picker in the toolbar, export to PNG/SVG |
 | **CLI** | `npx @neomermaid/cli render flow.mmd -o flow.png --preset neon/dracula` | Scripts, CI and **agents** — JSON in, beautiful images out |
-| **Live demo** | [weidows.github.io/neomermaid](https://blog.weidows.tech/neomermaid/) | No install: edit, switch themes, export |
+| **Live demo** | [blog.weidows.tech/neomermaid](https://blog.weidows.tech/neomermaid/) | No install: edit, switch themes, export |
 
 Plus the SDK itself, for your own product:
 
