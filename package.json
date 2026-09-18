@@ -23,7 +23,7 @@
     "demo": "npm run dev --workspace @neomermaid/demo",
     "examples": "node scripts/write-examples.mjs",
     "test": "npm run test --workspace @neomermaid/core",
-    "typecheck": "npm run typecheck --workspaces --if-present",
+    "typecheck": "npm run build:core && npm run typecheck --workspaces --if-present",
     "lint": "npm run typecheck",
     "gallery": "node packages/cli/bin/neomermaid.mjs gallery examples -o .gallery",
     "prepublish:all": "npm run build && npm run test"

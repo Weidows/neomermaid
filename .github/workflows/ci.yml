@@ -26,11 +26,11 @@ jobs:
       - name: Install (locked)
         run: npm ci
 
+      - name: Build core + CLI (dependents typecheck against core's emitted types)
+        run: npm run build
+
       - name: Typecheck
         run: npm run typecheck
-
-      - name: Build core + CLI
-        run: npm run build
 
       - name: Unit tests
         run: npm test
@@ -39,7 +39,7 @@ jobs:
         shell: bash
         run: |
           npm run examples
-          git diff --exit-code -- examples
+          git diff --exit-code --ignore-cr-at-eol -- examples
 
       - name: Doctor (which browser will be used)
         run: node packages/cli/bin/neomermaid.mjs doctor

@@ -37,13 +37,13 @@ jobs:
       - name: Install workspace dependencies
         run: npm ci
 
+      - name: Build core (the demo imports @neomermaid/core/dist)
+        run: npm run build:core
+
       - name: Typecheck core and demo
         run: |
           npm run typecheck --workspace @neomermaid/core
           npm run typecheck --workspace @neomermaid/demo
-
-      - name: Build core (the demo imports @neomermaid/core/dist)
-        run: npm run build:core
 
       - name: Build demo
         run: npm run build:demo

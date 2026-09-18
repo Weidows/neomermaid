@@ -1,0 +1,20 @@
+# Normalize everything to LF in the repository and in every checkout, so a
+# Windows contributor, a Linux runner and a macOS reviewer all see the same
+# bytes — and so generated files (examples/, docs images) never produce phantom
+# diffs in CI.
+* text=auto eol=lf
+
+# Binary assets must never be line-ending converted.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.vsix binary
+*.woff binary
+*.woff2 binary
+*.zip binary
+
+# Generated, but committed on purpose: editors and CI both diff these.
+examples/*.mmd text eol=lf
+docs/**/*.md text eol=lf
