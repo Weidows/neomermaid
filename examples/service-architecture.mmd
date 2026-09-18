@@ -1,0 +1,39 @@
+%% Service topology — Nested subgraphs standing in for layers of an architecture.
+%% preset hint: nested subgraphs, edges to subgraphs
+flowchart TB
+  client["Client apps"] --> edge
+
+  subgraph edge["Edge"]
+    direction LR
+    cdn["CDN cache"]
+    gw["API gateway"]
+  end
+
+  subgraph core["Core services"]
+    direction LR
+    subgraph identity["Identity"]
+      auth["Auth"]
+      users["User service"]
+    end
+    subgraph domain["Domain"]
+      orders["Orders"]
+      billing["Billing"]
+    end
+  end
+
+  subgraph data["Data"]
+    direction LR
+    pg[("Postgres")]
+    redis[("Redis")]
+    queue(["Event bus"])
+  end
+
+  edge --> core
+  core --> data
+  gw --> auth
+  gw --> orders
+  orders --> queue
+  queue --> billing
+  orders --> pg
+  auth --> redis
+  billing --> pg

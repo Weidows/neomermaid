@@ -1,0 +1,25 @@
+%% Release pipeline — Subgraphs, decision diamonds, nested shapes and per-class colours.
+%% preset hint: subgraphs, classDef, curved edges
+flowchart LR
+  subgraph dev[" Local "]
+    code["Write code"] --> test{{"Tests"}}
+    test -- "pass" --> lint["Lint"]
+    test -- "fail" --> code
+  end
+
+  subgraph ci[" CI "]
+    lint --> build["Build artifact"]
+    build --> sign{"Signed?"}
+    sign -- "no" --> build
+    sign -- "yes" --> publish
+  end
+
+  subgraph prod[" Production "]
+    publish["Publish release"] --> canary(["Canary 5%"])
+    canary --> full(["Full rollout"])
+  end
+
+  classDef danger fill:#ff5555,stroke:#ff5555,color:#1b1b1b;
+  classDef ok fill:#50fa7b,stroke:#50fa7b,color:#1b1b1b;
+  class sign danger;
+  class full ok;

@@ -1,0 +1,21 @@
+%% Launch plan — Gantt chart with phases, milestones and dependencies.
+%% preset hint: gantt, milestones
+gantt
+  title Product launch plan
+  dateFormat YYYY-MM-DD
+  axisFormat %b %d
+  todayMarker stroke-width:2px
+
+  section Design
+  Research          :done,    r1, 2026-01-05, 10d
+  Wireframes        :active,  r2, after r1, 12d
+  Visual design     :         r3, after r2, 15d
+
+  section Build
+  Core SDK          :crit,    b1, after r2, 25d
+  VS Code extension :         b2, after b1, 14d
+  CLI + packaging   :         b3, after b1, 10d
+
+  section Ship
+  Beta              :milestone, m1, after b2, 0d
+  Public launch     :milestone, m2, after b3, 0d

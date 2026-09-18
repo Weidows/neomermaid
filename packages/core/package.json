@@ -1,0 +1,50 @@
+{
+  "name": "@neomermaid/core",
+  "version": "0.1.0",
+  "description": "Themable Mermaid renderer core: theme engine, palettes and SVG post-processing.",
+  "keywords": ["mermaid", "diagram", "flowchart", "theme", "svg", "renderer"],
+  "license": "MIT",
+  "author": "Weidows",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./browser": {
+      "types": "./dist/browser.d.ts",
+      "default": "./dist/browser.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": ["dist", "README.md"],
+  "sideEffects": false,
+  "scripts": {
+    "build": "node ../../scripts/build-core.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "mermaid": "^12.0.0"
+  },
+  "devDependencies": {
+    "jsdom": "^26.0.0",
+    "vitest": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Weidows/neomermaid.git",
+    "directory": "packages/core"
+  }
+}

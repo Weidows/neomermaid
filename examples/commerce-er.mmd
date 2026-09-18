@@ -1,0 +1,30 @@
+%% Commerce schema — ER diagram with relations and attribute types.
+%% preset hint: ER model, cardinality, keys
+erDiagram
+  CUSTOMER ||--o{ ORDER : places
+  CUSTOMER {
+    uuid id PK
+    string email UK
+    string locale
+    timestamp created_at
+  }
+  ORDER ||--|{ ORDER_LINE : contains
+  ORDER {
+    uuid id PK
+    uuid customer_id FK
+    string status
+    decimal total
+  }
+  ORDER_LINE {
+    uuid id PK
+    uuid order_id FK
+    string sku
+    int quantity
+  }
+  PRODUCT ||--o{ ORDER_LINE : "is sold as"
+  PRODUCT {
+    uuid id PK
+    string name
+    decimal price
+    int stock
+  }

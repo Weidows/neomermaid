@@ -1,0 +1,21 @@
+%% Deploy decision — Compact decision tree — good for testing edge labels and dashes.
+%% preset hint: dashed edges, edge labels
+flowchart TD
+  start(["Merge to main"]) --> ci{"CI green?"}
+  ci -- "no" --> fix["Fix build"]
+  fix --> start
+  ci -- "yes" --> sec{"Security scan clean?"}
+  sec -- "no" --> review["Security review"]
+  review --> sec
+  sec -- "yes" --> env{"Target env"}
+  env -. "staging" .-> staging["Auto deploy"]
+  env -. "production" .-> approve["Change approval"]
+  approve --> window{"Window open?"}
+  window -- "no" --> wait["Wait for window"]
+  wait --> window
+  window -- "yes" --> rolling["Rolling deploy"]
+  staging --> smoke["Smoke tests"]
+  rolling --> smoke
+  smoke --> ok{"Healthy?"}
+  ok -- "no" --> rollback["Rollback"]
+  ok -- "yes" --> done(["Release done"])

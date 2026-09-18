@@ -1,0 +1,18 @@
+%% Order lifecycle — State machine with composite states and fork/join.
+%% preset hint: composite states, fork/join
+stateDiagram-v2
+  [*] --> Draft
+  Draft --> AwaitingPayment: submit
+  AwaitingPayment --> Paid: payment captured
+  AwaitingPayment --> Cancelled: timeout (30m)
+  state Paid {
+    [*] --> Picking
+    Picking --> Packed: pick complete
+    Packed --> Shipped: courier pickup
+  }
+  Paid --> Delivered: tracking delivered
+  Delivered --> Returned: customer returns
+  Delivered --> [*]
+  Cancelled --> [*]
+  Returned --> Refunded
+  Refunded --> [*]

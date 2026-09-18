@@ -1,0 +1,44 @@
+{
+  "name": "@neomermaid/cli",
+  "version": "0.1.0",
+  "description": "Command line renderer for NeoMermaid — mermaid in, beautiful SVG/PNG/PDF out. Agent friendly JSON.",
+  "keywords": ["mermaid", "cli", "diagram", "svg", "png", "renderer", "theme"],
+  "license": "MIT",
+  "author": "Weidows",
+  "type": "module",
+  "bin": {
+    "neomermaid": "./bin/neomermaid.mjs"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": ["dist", "bin", "README.md"],
+  "scripts": {
+    "build": "node ../../scripts/build-cli.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@neomermaid/core": "0.1.0",
+    "puppeteer-core": "^24.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Weidows/neomermaid.git",
+    "directory": "packages/cli"
+  }
+}

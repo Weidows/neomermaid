@@ -1,0 +1,26 @@
+%% OAuth login — Sequence diagram with notes, loops and activations.
+%% preset hint: participants, notes, loops
+sequenceDiagram
+  autonumber
+  participant U as User
+  participant A as App
+  participant I as IdP
+  participant D as Database
+
+  U->>A: Click "Sign in"
+  A->>I: Authorization request + PKCE
+  I-->>U: Consent screen
+  U->>I: Approve scopes
+  I-->>A: Authorization code
+  A->>I: Exchange code for tokens
+  I-->>A: id_token + refresh_token
+  activate A
+  A->>D: Upsert user record
+  D-->>A: user_id
+  deactivate A
+  Note over A,D: Session cookie is issued here
+  loop Every 15 minutes
+    A->>I: Refresh access token
+    I-->>A: New access token
+  end
+  A-->>U: Redirect to dashboard

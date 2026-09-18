@@ -1,0 +1,42 @@
+%% Domain model — Class diagram with inheritance, composition and interfaces.
+%% preset hint: class diagram, generics, notes
+classDiagram
+  direction LR
+  class Repository~T~ {
+    <<interface>>
+    +findById(id) T
+    +save(entity) T
+    +delete(id) void
+  }
+  class Entity {
+    <<abstract>>
+    +UUID id
+    +Date createdAt
+    +touch() void
+  }
+  class Order {
+    +String reference
+    +Money total
+    +List~LineItem~ items
+    +addItem(item) void
+  }
+  class LineItem {
+    +String sku
+    +int quantity
+    +Money price
+  }
+  class Customer {
+    +String email
+    +String locale
+    +Order[] history
+  }
+  class OrderRepository {
+    +findByCustomer(customer) Order[]
+  }
+
+  Entity <|-- Order
+  Entity <|-- Customer
+  Order *-- "1..*" LineItem
+  Customer "1" o-- "0..*" Order
+  Repository <|.. OrderRepository
+  OrderRepository ..> Order : persists

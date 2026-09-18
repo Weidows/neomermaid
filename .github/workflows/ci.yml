@@ -1,0 +1,101 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-test:
+    name: build · test · render (${{ matrix.os }}, node ${{ matrix.node }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node: ['20', '22']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - name: Install (locked)
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build core + CLI
+        run: npm run build
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Regenerate examples and confirm they are in sync
+        shell: bash
+        run: |
+          npm run examples
+          git diff --exit-code -- examples
+
+      - name: Doctor (which browser will be used)
+        run: node packages/cli/bin/neomermaid.mjs doctor
+
+      - name: Render smoke test (png + svg + json contract)
+        shell: bash
+        run: |
+          set -euo pipefail
+          node packages/cli/bin/neomermaid.mjs render examples/release-flow.mmd -o out.png --preset neon/dracula --json > result.json
+          node -e "
+            const r = require('./result.json');
+            if (!r.ok) throw new Error('render failed: ' + JSON.stringify(r));
+            if (r.width < 100 || r.height < 100) throw new Error('suspicious size ' + r.width + 'x' + r.height);
+            if (r.bytes < 1000) throw new Error('png too small: ' + r.bytes);
+            console.log('rendered', r.theme + '/' + r.palette, r.width + 'x' + r.height, r.bytes + ' bytes');
+          "
+          node packages/cli/bin/neomermaid.mjs render examples/budget-pie.mmd -o out.svg --theme tech --palette tokyo-night
+          grep -q 'data-neomermaid="theme"' out.svg
+
+      - name: Invalid syntax must fail cleanly
+        shell: bash
+        run: |
+          printf 'flowchart LR\n  A -->\n' > broken.mmd
+          if node packages/cli/bin/neomermaid.mjs render broken.mmd -o broken.png --json > broken.json; then
+            echo "expected a non-zero exit for invalid syntax"; exit 1
+          fi
+          node -e "const r=require('./broken.json'); if (r.ok !== false || !r.error) { throw new Error('bad error contract'); } console.log('error contract ok');"
+
+      - name: Theme x palette matrix renders
+        shell: bash
+        run: |
+          node packages/cli/bin/neomermaid.mjs gallery examples -o .gallery \
+            --presets minimal/github-light,neon/dracula,tech/tokyo-night,cartoon/solarized-light,glass/nord,blueprint/dracula \
+            --scale 1 --quiet
+          test "$(ls .gallery/*.png | wc -l)" -eq 60
+
+      - name: Upload gallery
+        if: matrix.os == 'ubuntu-latest' && matrix.node == '22'
+        uses: actions/upload-artifact@v4
+        with:
+          name: gallery
+          path: .gallery/*.png
+          retention-days: 7
+
+  extension:
+    name: VS Code extension
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Build extension bundle
+        run: node scripts/build-vscode.mjs
+      - name: Smoke test the webview in headless Chromium
+        run: node packages/vscode/scripts/webview-smoke.mjs
