@@ -188,7 +188,11 @@ function stripInlineEdgeAnimation(root: Element): number {
 }
 
 /** Measure a single line of text with the browser's own font metrics. */
-function measureText(text: string, font: string): number | undefined {
+function measureText(
+  text: string,
+  font: string,
+  options: { letterSpacing?: number; uppercase?: boolean } = {},
+): number | undefined {
   try {
     const doc = globalThis.document;
     if (!doc) return undefined;
@@ -196,11 +200,29 @@ function measureText(text: string, font: string): number | undefined {
     const ctx = canvas.getContext?.('2d');
     if (!ctx) return undefined;
     ctx.font = font;
-    const width = ctx.measureText(text).width;
+    // mermaid cannot measure letter-spacing or text-transform, so we must.
+    if (options.letterSpacing && 'letterSpacing' in ctx) {
+      (ctx as unknown as { letterSpacing: string }).letterSpacing = `${options.letterSpacing}px`;
+    }
+    const sample = options.uppercase ? text.toUpperCase() : text;
+    const width = ctx.measureText(sample).width;
     return Number.isFinite(width) && width > 0 ? width : undefined;
   } catch {
     return undefined;
   }
+}
+
+function measureOptions(tokens: ThemeTokens): { letterSpacing: number; uppercase: boolean } {
+  return {
+    letterSpacing: tokens.typography.letterSpacing,
+    uppercase: tokens.typography.textTransform === 'uppercase',
+  };
+}
+
+/** Append declarations to an element's inline style, keeping what is there. */
+function appendInlineStyle(el: Element, css: string): void {
+  const existing = el.getAttribute('style') ?? '';
+  el.setAttribute('style', `${existing.replace(/;\s*$/, '')}; ${css}`);
 }
 
 /**
@@ -221,13 +243,30 @@ function fitEdgeLabels(root: Element, tokens: ThemeTokens): number {
     const fo = labelGroup?.querySelector('foreignObject');
     if (!labelGroup || !fo) continue;
 
+    // mermaid hard-codes `display: table-cell` (and a line-height) on the label
+    // div. Inside a host page that resets `box-sizing: border-box` — a VS Code
+    // webview, any site with a CSS reset — the table-cell box grows taller than
+    // the foreignObject viewport and its vertically centred text lands outside
+    // the visible area, so the label disappears. We own the pill layout: drop
+    // those inline declarations and set them from the stylesheet instead.
+    const inner = fo.firstElementChild;
+    if (inner) {
+      const cleaned = (inner.getAttribute('style') ?? '')
+        .split(';')
+        .map((part) => part.trim())
+        .filter((part) => part && !/^(display|line-height|box-sizing)\s*:/i.test(part))
+        .join('; ');
+      if (cleaned) inner.setAttribute('style', cleaned);
+      else inner.removeAttribute('style');
+    }
+
     const currentW = num(fo.getAttribute('width'), 0);
     const currentH = num(fo.getAttribute('height'), 0);
     const text = (fo.textContent ?? '').replace(/\s+/g, ' ').trim();
     // Multi-line / rich labels: leave mermaid's measurement alone, just pad.
     const isPlain = Boolean(text) && !/[\n]/.test(fo.textContent ?? '');
 
-    const measured = isPlain ? measureText(text, font) : undefined;
+    const measured = isPlain ? measureText(text, font, measureOptions(tokens)) : undefined;
     const textWidth = Math.max(measured ?? 0, currentW);
     const textHeight = Math.max(currentH, lineHeight);
 
@@ -241,6 +280,62 @@ function fitEdgeLabels(root: Element, tokens: ThemeTokens): number {
     fitted += 1;
   }
   return fitted;
+}
+
+/** Font-size multiplier that makes `measured` fit into `available`. Pure, so it is testable. */
+export function shrinkForWidth(measured: number, available: number, floor = 0.72): number {
+  if (!(measured > 0) || !(available > 0)) return 1;
+  if (measured <= available * 1.02) return 1;
+  return Math.max(floor, available / measured);
+}
+
+/**
+ * Some diagrams (mindmaps, for example) emit `g.edgeLabel` groups with no text
+ * at all, anchored at the origin. Our pill styling would turn each of those into
+ * a visible empty capsule in the top-left corner, so hide them.
+ */
+function hideEmptyLabels(root: Element): number {
+  let hidden = 0;
+  for (const group of Array.from(root.querySelectorAll('g.edgeLabel'))) {
+    if ((group.textContent ?? '').replace(/\s+/g, '') !== '') continue;
+    const target = group.querySelector('foreignObject') ?? group;
+    (target as Element).setAttribute('style', 'display: none');
+    hidden += 1;
+  }
+  return hidden;
+}
+
+/**
+ * Mermaid sizes a label's `<foreignObject>` from *its* font metrics. Themes that
+ * add letter-spacing or uppercase (or simply a wider font) push the rendered text
+ * past that box, and the label gets clipped mid-word — very visible on mindmaps
+ * and ER diagrams. Measure with the real font and shrink the offending labels a
+ * little instead of letting them break.
+ */
+function fitClippedLabels(root: Element, tokens: ThemeTokens): number {
+  const { typography: t } = tokens;
+  const font = `${t.fontWeight} ${t.fontSize}px ${t.fontFamily}`;
+  const options = measureOptions(tokens);
+  let adjusted = 0;
+
+  for (const fo of Array.from(root.querySelectorAll('foreignObject'))) {
+    if (fo.closest('g.edgeLabel')) continue; // handled by fitEdgeLabels
+    const width = num(fo.getAttribute('width'), 0);
+    if (width <= 0) continue;
+    const inner = fo.firstElementChild;
+    if (!inner) continue;
+    const raw = (inner.textContent ?? '').replace(/\s+/g, ' ').trim();
+    if (!raw) continue;
+
+    const measured = measureText(raw, font, options);
+    if (!measured) continue;
+    const factor = shrinkForWidth(measured, width - 2);
+    if (factor === 1) continue;
+    const size = Math.round(t.fontSize * factor * 100) / 100;
+    appendInlineStyle(inner, `font-size: ${size}px;`);
+    adjusted += 1;
+  }
+  return adjusted;
 }
 
 /**
@@ -414,13 +509,19 @@ export function postProcessSvg(options: PostProcessOptions): PostProcessResult {
   // 1. mermaid's inline edge animation would defeat our dash/motion styling.
   stripInlineEdgeAnimation(root);
 
-  // 2. Edge labels were measured with mermaid's font, not ours.
+  // 2. Labels with no text at all must not be painted as empty pills.
+  hideEmptyLabels(root);
+
+  // 3. Edge labels were measured with mermaid's font, not ours.
   const fitted = fitEdgeLabels(root, options.tokens);
   if (fitted > 0 && !globalThis.document) {
     warnings.push(`${fitted} edge label(s) padded without font metrics; text may sit tight.`);
   }
 
-  // 3. Hand-drawn nodes ship as unfilled outlines; give them the theme fill.
+  // 4. Node labels can overflow their measured box once our fonts land.
+  fitClippedLabels(root, options.tokens);
+
+  // 5. Hand-drawn nodes ship as unfilled outlines; give them the theme fill.
   fillSketchShapes(root, options.tokens);
 
   /* ------------------------------------------------------------- stylesheet */

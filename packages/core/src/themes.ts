@@ -269,7 +269,7 @@ const glass: ThemeDefinition = {
       nodeStroke: 'rgba(255, 255, 255, 0.32)',
       nodeText: '#f6f8ff',
       edge: 'rgba(255, 255, 255, 0.55)',
-      edgeLabelBg: 'rgba(255, 255, 255, 0.14)',
+      edgeLabelBg: 'rgba(255, 255, 255, 0.22)',
       edgeLabelText: '#ffffff',
       clusterFill: 'rgba(255, 255, 255, 0.06)',
       clusterStroke: 'rgba(255, 255, 255, 0.18)',

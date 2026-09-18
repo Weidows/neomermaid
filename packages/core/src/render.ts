@@ -1,4 +1,5 @@
-import type { MermaidConfigLike, MermaidLike, RenderOptions, RenderResult } from './types.js';
+import { contrastText, mix, withAlpha } from './color.js';
+import type { MermaidConfigLike, MermaidLike, Palette, RenderOptions, RenderResult } from './types.js';
 import { resolveTheme } from './theme.js';
 import { postProcessSvg } from './svg.js';
 
@@ -66,15 +67,52 @@ async function resolveMermaidInstance(options: RenderOptions): Promise<MermaidLi
 }
 
 /**
+ * Mermaid's multi-series families (pie slices, git branches, quadrants, timeline
+ * bands) read colours from numbered theme variables that default to a single
+ * hue — which is why an untouched pie chart comes out monochrome. Build a real
+ * ramp from the palette instead.
+ */
+export function seriesPalette(palette: Palette, count = 12): string[] {
+  const base = [
+    palette.hues.blue,
+    palette.hues.cyan,
+    palette.hues.green,
+    palette.hues.yellow,
+    palette.hues.orange,
+    palette.hues.red,
+    palette.hues.purple,
+    palette.hues.pink,
+  ];
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (let i = 0; i < count; i += 1) {
+    const hue = base[i % base.length]!;
+    const cycle = Math.floor(i / base.length);
+    // Second and third passes are shifted. Some schemes (Monokai) genuinely reuse
+    // a hue across slots, so keep nudging until every slice is distinguishable.
+    let colour = cycle === 0 ? hue : cycle === 1 ? mix(hue, '#ffffff', 0.32) : mix(hue, '#000000', 0.3);
+    let guard = 0;
+    while (seen.has(colour) && guard < 10) {
+      colour = mix(colour, guard % 2 === 0 ? '#ffffff' : '#000000', 0.18);
+      guard += 1;
+    }
+    seen.add(colour);
+    out.push(colour);
+  }
+  return out;
+}
+
+/**
  * Translate our tokens into mermaid's own configuration. This matters beyond
  * cosmetics: mermaid measures every label through its theme typography, so the
  * font family/size must be configured *before* layout or text would overflow.
  */
 export function buildMermaidConfig(options: RenderOptions): MermaidConfigLike {
-  const { tokens } = resolveTheme(options);
+  const { tokens, palette } = resolveTheme(options);
   const { colors, typography: t, effects: e } = tokens;
   const fontFamily = t.fontFamily;
   const fontSize = `${t.fontSize}px`;
+  const series = seriesPalette(palette, 12);
 
   const themeVariables: Record<string, string> = {
     fontFamily,
@@ -119,6 +157,27 @@ export function buildMermaidConfig(options: RenderOptions): MermaidConfigLike {
     fillType0: colors.nodeFill,
     fillType1: colors.nodeFillAlt,
     fillType2: colors.clusterFill,
+    // Sequence diagrams colour the autonumber text through an id selector.
+    sequenceNumberColor: contrastText(colors.accent),
+    ...Object.fromEntries(series.map((colour, i) => [`pie${i + 1}`, colour])),
+    ...Object.fromEntries(series.map((colour, i) => [`cScale${i}`, colour])),
+    ...Object.fromEntries(series.map((colour, i) => [`cScaleInv${i}`, mix(colour, '#000000', 0.35)])),
+    ...Object.fromEntries(series.map((colour, i) => [`cScaleLabel${i}`, contrastText(colour)])),
+    ...Object.fromEntries(series.slice(0, 8).map((colour, i) => [`git${i}`, colour])),
+    quadrant1Fill: withAlpha(series[0]!, 0.25, colors.nodeFillAlt),
+    quadrant2Fill: withAlpha(series[2]!, 0.25, colors.nodeFillAlt),
+    quadrant3Fill: withAlpha(series[5]!, 0.25, colors.nodeFillAlt),
+    quadrant4Fill: withAlpha(series[5]!, 0.18, colors.nodeFillAlt),
+    quadrant1TextFill: colors.nodeText,
+    quadrant2TextFill: colors.nodeText,
+    quadrant3TextFill: colors.nodeText,
+    quadrant4TextFill: colors.nodeText,
+    quadrantPointFill: colors.accent,
+    quadrantPointTextFill: colors.nodeText,
+    quadrantXAxisTextFill: colors.clusterText,
+    quadrantYAxisTextFill: colors.clusterText,
+    quadrantInternalBorderStrokeFill: colors.clusterStroke,
+    quadrantExternalBorderStrokeFill: colors.nodeStroke,
   };
 
   const config: MermaidConfigLike = {

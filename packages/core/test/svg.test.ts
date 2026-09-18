@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { postProcessSvg } from '../src/svg.js';
+import { postProcessSvg, shrinkForWidth } from '../src/svg.js';
 import { resolveTheme } from '../src/theme.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -17,6 +17,32 @@ function run(overrides: Parameters<typeof postProcessSvg>[0] extends never ? nev
   } as Parameters<typeof postProcessSvg>[0];
   return postProcessSvg(options);
 }
+
+describe('shrinkForWidth', () => {
+  it('leaves labels that fit alone', () => {
+    expect(shrinkForWidth(100, 120)).toBe(1);
+    expect(shrinkForWidth(100, 100)).toBe(1);
+    // 2% tolerance: rounding noise must not resize every label.
+    expect(shrinkForWidth(101, 100)).toBe(1);
+  });
+
+  it('scales down just enough for labels that overflow', () => {
+    expect(shrinkForWidth(125, 100)).toBeCloseTo(0.8, 3);
+    expect(shrinkForWidth(150, 120)).toBeCloseTo(0.8, 3);
+    expect(shrinkForWidth(112, 100)).toBeCloseTo(0.8928, 3);
+  });
+
+  it('never shrinks below the floor, so text stays legible', () => {
+    expect(shrinkForWidth(1000, 100)).toBe(0.72);
+    expect(shrinkForWidth(1000, 100, 0.5)).toBe(0.5);
+  });
+
+  it('degrades safely on nonsense input', () => {
+    expect(shrinkForWidth(0, 100)).toBe(1);
+    expect(shrinkForWidth(100, 0)).toBe(1);
+    expect(shrinkForWidth(Number.NaN, 100)).toBe(1);
+  });
+});
 
 describe('postProcessSvg', () => {
   it('keeps mermaid\'s own stylesheet and appends ours after it', () => {
@@ -105,10 +131,11 @@ describe('postProcessSvg', () => {
       'class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link"',
       'class="edge-thickness-normal flowchart-link" style="stroke-dasharray: 0 0 32 4; stroke-dashoffset: 0;;"',
     );
-    const { svg } = run({ svg: withInline, tokens: resolveTheme({ preset: 'neon/dracula' }).tokens });
+    const neon = resolveTheme({ preset: 'neon/dracula' }).tokens;
+    const { svg } = run({ svg: withInline, tokens: neon });
     const path = /<path[^>]*flowchart-link[^>]*>/.exec(svg)?.[0] ?? '';
     expect(path).not.toContain('stroke-dasharray');
-    expect(svg).toContain('stroke-dasharray: 8 6');
+    expect(svg).toContain(`stroke-dasharray: ${neon.geometry.edgeDash}`);
     expect(svg).toContain('neom-dash-neomtest1');
   });
 
@@ -116,7 +143,7 @@ describe('postProcessSvg', () => {
     const labelled = FIXTURE.replace(
       '<g class="edgeLabels"></g>',
       '<g class="edgeLabels"><g class="edgeLabel" transform="translate(100, 90)"><g class="label" transform="translate(-12.3, -10.5)">' +
-        '<foreignObject width="24.609375" height="21"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg"><span class="edgeLabel"><p>yes</p></span></div></foreignObject>' +
+        '<foreignObject width="24.609375" height="21"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>yes</p></span></div></foreignObject>' +
         '</g></g></g>',
     );
     const { svg } = run({ svg: labelled });
@@ -128,6 +155,11 @@ describe('postProcessSvg', () => {
     const transform = /<g class="label" transform="translate\(([-\d.]+), ([-\d.]+)\)"/.exec(edge);
     expect(Number(transform![1])).toBeCloseTo(-Number(fo![1]) / 2, 1);
     expect(Number(transform![2])).toBeCloseTo(-Number(fo![2]) / 2, 1);
+    // mermaid's `display: table-cell` must not survive: with a host page's
+    // `box-sizing: border-box` reset it pushes the text out of the viewport.
+    expect(edge).not.toContain('display: table-cell');
+    expect(edge).not.toContain('line-height: 1.5');
+    expect(edge).toContain('white-space: nowrap');
   });
 
   it('colours hand-drawn (rough) nodes path by path', () => {
@@ -155,6 +187,18 @@ describe('postProcessSvg', () => {
     expect(outlinePath).toContain('stroke-width="2.6"');
     // …and the stylesheet must not repaint them.
     expect(svg).not.toMatch(/#\w+ \.rough-node path/);
+  });
+
+  it('hides empty edge-label groups instead of painting empty pills', () => {
+    // Mindmaps emit label groups with no text, anchored at the origin.
+    const withEmpty = FIXTURE.replace(
+      '<g class="edgeLabels"></g>',
+      '<g class="edgeLabels"><g class="edgeLabel" transform="translate(0, 0)"><g class="label">' +
+        '<foreignObject width="12" height="21"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg"><span class="edgeLabel"><p></p></span></div></foreignObject>' +
+        '</g></g></g>',
+    );
+    const { svg } = run({ svg: withEmpty });
+    expect(svg).toContain('display: none');
   });
 
   it('survives HTML entities that XML mode rejects', () => {

@@ -1,4 +1,4 @@
-import { mix, withAlpha } from './color.js';
+import { contrastText, mix, withAlpha } from './color.js';
 import type { ThemeTokens } from './types.js';
 
 /**
@@ -102,11 +102,12 @@ const LABEL_SELECTORS = [
   '.taskText',
   '.taskTextOutsideRight',
   '.taskTextOutsideLeft',
-  '.slice',
-  '.pieCircle',
   '.titleText',
   '.legend text',
 ];
+// NOTE: `.slice` is the pie *percentage text*; `.pieCircle` is the slice shape and
+// must never be given a text colour — doing so painted every slice the same pale
+// colour and hid the per-slice fills mermaid writes as attributes.
 
 function scope(id: string, selectors: string[]): string {
   return selectors.map((sel) => `#${id} ${sel}`).join(',\n  ');
@@ -271,31 +272,41 @@ export function buildStylesheet(ctx: StyleContext): string {
   const halo = ctx.paintsBackground
     ? `box-shadow: 0 0 0 ${Math.max(2, Math.round(g.edgeWidth + 1))}px ${v(colors.bg)};`
     : '';
-  // The pill padding here is mirrored in `fitEdgeLabels` (svg.ts), which grows
-  // mermaid's measured foreignObject so the text can never be clipped.
-  rules.push(`${scope(id, ['.edgeLabel', '.edgeLabel p', '.labelBkg']) } {
+  const labelLineHeight = Math.max(1.2, Math.min(1.6, (Math.ceil(t.labelFontSize * 1.5) / t.labelFontSize)));
+
+  // Only the pill surface carries the box: background, border, padding and halo.
+  // Everything else in the label keeps a neutral box model so a host page's CSS
+  // reset cannot move the text out of the foreignObject viewport.
+  rules.push(`${scope(id, ['.labelBkg']) } {
+  display: block;
+  box-sizing: border-box;
+  line-height: ${Math.round(labelLineHeight * 100) / 100};
+  margin: 0;
+  padding: ${px(pad.y)} ${px(pad.x)};
+  text-align: center;
+  white-space: nowrap;
   background-color: ${v(colors.edgeLabelBg)};
   color: ${v(colors.edgeLabelText)};
   fill: ${v(colors.edgeLabelText)};
   border-radius: ${px(pill)};
-  padding: ${px(pad.y)} ${px(pad.x)};
   font-size: ${px(t.labelFontSize)};
-  line-height: 1.4;
   ${labelBorder}
-}`);
-  // The halo only belongs on the surface that carries the background.
-  rules.push(`${scope(id, ['.labelBkg']) } {
   ${halo}
 }`);
-  rules.push(`${scope(id, ['.edgeLabel']) } {
+  rules.push(`${scope(id, ['.edgeLabel', '.edgeLabel span', '.edgeLabel p']) } {
+  margin: 0;
   padding: 0;
   background-color: transparent;
+  color: ${v(colors.edgeLabelText)};
+  fill: ${v(colors.edgeLabelText)};
+  font-size: ${px(t.labelFontSize)};
 }`);
-  // The wrapper mermaid puts around HTML labels adds its own box; keep the pill
-  // as the only visible surface.
-  rules.push(`${scope(id, ['.edgeLabel > .label', '.edgeLabel .label']) } {
-  background-color: transparent;
-  padding: 0;
+  // HTML label boxes only (an inline `display: table-cell` from mermaid is removed
+  // in the post-processor, otherwise a host `box-sizing: border-box` reset moves
+  // the text out of the foreignObject viewport).
+  rules.push(`${scope(id, ['.edgeLabel span', '.edgeLabel p']) } {
+  display: block;
+  box-sizing: border-box;
 }`);
   // mermaid draws an extra rect behind the label; keep it out of the way so the
   // pill is the only box the user sees.
@@ -334,16 +345,42 @@ export function buildStylesheet(ctx: StyleContext): string {
   stroke-width: 1px;
   stroke-dasharray: 4 4;
 }`);
-  rules.push(`${scope(id, ['.activation0', '.activation1', '.activation2', '.er.attributeBoxOdd']) } {
+  // Activations: tinted with the accent so they read as "this participant is
+  // busy" on translucent themes instead of vanishing into the canvas.
+  rules.push(`${scope(id, ['.activation0', '.activation1', '.activation2']) } {
+  fill: ${v(withAlpha(colors.accent, 0.3, colors.nodeFillAlt))};
+  stroke: ${v(withAlpha(colors.accent, 0.75, colors.nodeStroke))};
+  stroke-width: ${Math.max(1, g.strokeWidth)}px;
+}`);
+  // Sequence autonumbering: the class paints the badge circle, the number text
+  // itself lives under an id selector — both need styling or the numbers vanish.
+  rules.push(`${scope(id, ['.sequenceNumber']) } {
+  fill: ${v(colors.accent)};
+  stroke: ${v(colors.nodeStroke)};
+  stroke-width: 1px;
+}`);
+  rules.push(`${scope(id, ['[id$="-sequencenumber"]', '[id$="-sequencenumber"] tspan', '.sequenceNumber text', '.sequenceNumber tspan']) } {
+  fill: ${v(contrastText(colors.accent))};
+  color: ${v(contrastText(colors.accent))};
+  font-weight: 700;
+}`);
+  // Sequence arrowheads are also id-selector based, so they need explicit colours.
+  rules.push(`${scope(id, ['[id$="-arrowhead"] path', '[id$="-crosshead"] path', '[id$="-arrowhead"]', '[id$="-crosshead"]']) } {
+  fill: ${v(colors.edge)};
+  stroke: ${v(colors.edge)};
+}`);
+  rules.push(`${scope(id, ['.er.attributeBoxOdd']) } {
   fill: ${v(colors.nodeFillAlt)};
   stroke: ${v(colors.nodeStroke)};
 }`);
-  rules.push(`${scope(id, ['.er.attributeBoxEven', '.er.attributeBoxOdd']) } {
+  rules.push(`${scope(id, ['.er.attributeBoxEven']) } {
+  fill: ${v(colors.nodeFill)};
   stroke: ${v(colors.nodeStroke)};
 }`);
   rules.push(`${scope(id, ['.note']) } {
-  fill: ${v(withAlpha(colors.accent, 0.14, colors.nodeFillAlt))};
+  fill: ${v(withAlpha(colors.accent, 0.2, colors.nodeFillAlt))};
   stroke: ${v(colors.accent)};
+  stroke-width: ${Math.max(1, g.strokeWidth)}px;
 }`);
   rules.push(`${scope(id, ['.noteText', '.noteText > tspan']) } {
   fill: ${v(colors.nodeText)};
@@ -365,9 +402,35 @@ export function buildStylesheet(ctx: StyleContext): string {
   fill: ${v(colors.nodeFill)};
   stroke: ${v(colors.nodeStroke)};
 }`);
-  rules.push(`${scope(id, ['.slice', '.pieCircle', '.pieOuterCircle']) } {
+  // mermaid ships `.section{opacity:.2}` with fills only for section0/section2,
+  // which makes the bands look random. One deliberate band colour for all of
+  // them keeps gantt rows readable.
+  rules.push(`${scope(id, ['.section', '.section0', '.section1', '.section2', '.section3']) } {
+  fill: ${v(withAlpha(colors.nodeFillAlt, 0.5, 'transparent'))};
+  stroke: none;
+  opacity: 1;
+}`);
+  rules.push(`${scope(id, ['.slice']) } {
+  fill: ${v(contrastText(colors.bg))};
+  color: ${v(contrastText(colors.bg))};
+  font-size: ${px(t.fontSize)};
+  font-weight: 600;
+  /* Outline behind the glyphs: percentages sit on both light and dark slices. */
+  paint-order: stroke;
+  stroke: ${v(withAlpha(colors.bg, 0.65, 'transparent'))};
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}`);
+  // Slices keep the per-slice colour mermaid writes as an attribute; we only
+  // sharpen the edge and drop mermaid's washed-out 0.7 opacity.
+  rules.push(`${scope(id, ['.pieCircle', '.pieOuterCircle']) } {
+  opacity: 1;
   stroke: ${v(colors.bg)};
   stroke-width: 2px;
+}`);
+  rules.push(`${scope(id, ['.titleText', '.legend text']) } {
+  fill: ${v(colors.nodeText)};
+  color: ${v(colors.nodeText)};
 }`);
 
   /* ------------------------------------------------------------------- errors */

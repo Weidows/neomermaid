@@ -65,9 +65,45 @@ describe('buildStylesheet', () => {
 
   it('styles the whole diagram family, not just flowcharts', () => {
     const sheet = css('minimal/dracula');
-    for (const selector of ['.actor', 'text.actor', '.note', '.loopLine', '.er.relationshipLine', '.transition']) {
+    for (const selector of [
+      '.actor',
+      'text.actor',
+      '.note',
+      '.loopLine',
+      '.er.relationshipLine',
+      '.er.attributeBoxOdd',
+      '.er.attributeBoxEven',
+      '.transition',
+      '.sequenceNumber',
+      '.activation0',
+      '.section0',
+      '.task',
+    ]) {
       expect(sheet).toContain(selector);
     }
+  });
+
+  it('gives sequence activations and autonumbers real presence', () => {
+    const sheet = css('glass/nord');
+    // Accent tint rather than a translucent white that disappears.
+    expect(sheet).toMatch(/#demo \.activation0,[\s\S]*?fill: rgba\(136, 192, 208, 0\.2\)/);
+    expect(sheet).toMatch(/#demo \.sequenceNumber[\s\S]*?fill: #88c0d0/);
+  });
+
+  it('paints one deliberate gantt band colour instead of mermaid\'s half-filled sections', () => {
+    const sheet = css('tech/tokyo-night');
+    expect(sheet).toMatch(/#demo \.section,[\s\S]*?#demo \.section3[\s\S]*?opacity: 1/);
+  });
+
+  it('never paints pie slices with the text colour', () => {
+    const sheet = css('minimal/dracula');
+    const pieBlock = /#demo \.pieCircle[\s\S]*?\}/.exec(sheet)?.[0] ?? '';
+    expect(pieBlock).toBeTruthy();
+    // A fill here would override mermaid's per-slice attribute colours.
+    expect(pieBlock).not.toContain('fill:');
+    expect(pieBlock).toContain('opacity: 1');
+    // The percentage text keeps a readable colour over any slice.
+    expect(/^#demo \.slice \{[\s\S]*?fill: #ffffff/m.test(sheet)).toBe(true);
   });
 
   it('cannot be broken out of with hostile values', () => {

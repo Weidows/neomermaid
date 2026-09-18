@@ -12,7 +12,15 @@ import { THEMES } from './themes.js';
 
 /* ------------------------------------------------------------------ runtime */
 
-export { render, renderToElement, validate, RenderError, buildMermaidConfig, sanitizeId } from './render.js';
+export {
+  render,
+  renderToElement,
+  validate,
+  RenderError,
+  buildMermaidConfig,
+  seriesPalette,
+  sanitizeId,
+} from './render.js';
 export { postProcessSvg, wrapInHtml } from './svg.js';
 export { buildStylesheet, buildHostStyles } from './styles.js';
 export { resolveTheme, parsePreset, deepMerge, listThemes } from './theme.js';
