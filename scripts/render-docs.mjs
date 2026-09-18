@@ -88,8 +88,13 @@ const example = (id) => {
 /* ------------------------------------------------------- 2. NeoMermaid output */
 
 const cli = resolve(root, 'packages', 'cli', 'bin', 'neomermaid.mjs');
-function neo(exampleId, preset, out, extra = []) {
-  execFileSync(process.execPath, [cli, 'render', resolve(root, 'examples', `${exampleId}.mmd`), '-o', resolve(outDir, out), '--preset', preset, '--scale', '2', '--padding', '24', '--quiet', ...extra], {
+// README images: the SVG is vector, so 1.2–1.3× is plenty for a README and keeps
+// the repository (and every clone) light. Override with DOCS_SCALE for a
+// high-DPI set.
+const SCALE_HERO = process.env.DOCS_SCALE ?? '1.3';
+const SCALE_GRID = process.env.DOCS_SCALE ?? '1.2';
+function neo(exampleId, preset, out, extra = [], scale = SCALE_HERO) {
+  execFileSync(process.execPath, [cli, 'render', resolve(root, 'examples', `${exampleId}.mmd`), '-o', resolve(outDir, out), '--preset', preset, '--scale', scale, '--padding', '24', '--quiet', ...extra], {
     stdio: 'inherit',
   });
   console.log(`✓ docs/images/${out}  (${preset})`);
@@ -107,10 +112,10 @@ const grid = [
   ['blueprint', 'dracula'],
 ];
 for (const [theme, palette] of grid) {
-  neo('service-architecture', `${theme}/${palette}`, `theme-${theme}.png`);
+  neo('service-architecture', `${theme}/${palette}`, `theme-${theme}.png`, [], SCALE_GRID);
 }
 
 // Transparent-background export, to prove alpha survives the pipeline.
-neo('release-flow', 'tech/tokyo-night', 'export-transparent.png', ['--background', 'transparent']);
+neo('release-flow', 'tech/tokyo-night', 'export-transparent.png', ['--background', 'transparent'], SCALE_GRID);
 
 console.log('\nAll docs images written to docs/images');
