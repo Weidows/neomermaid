@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>NeoMermaid Playground — 主题化 Mermaid 渲染器在线演示</title>
+    <meta
+      name="description"
+      content="NeoMermaid 在线演示：6 套主题 × 12 套配色，实时渲染、源码编辑、SVG/PNG 导出。"
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230d0f16'/%3E%3Cpath d='M7 16h6l4-7 4 14 4-7h0' fill='none' stroke='%23ff79c6' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <div>
+            <h1>NeoMermaid <span>Playground</span></h1>
+            <p class="tagline">
+              实时主题化 Mermaid 渲染 — <code>@neomermaid/core</code> 的浏览器演示
+            </p>
+          </div>
+        </div>
+        <nav class="topbar-links">
+          <a href="https://github.com/Weidows/neomermaid" rel="noreferrer">GitHub</a>
+          <a href="https://www.npmjs.com/package/@neomermaid/core" rel="noreferrer">npm</a>
+        </nav>
+      </header>
+
+      <aside class="panel" aria-label="控制面板">
+        <section class="group">
+          <h2>图表</h2>
+          <label class="field">
+            <span>示例</span>
+            <select id="example"></select>
+          </label>
+          <p class="hint" id="example-desc"></p>
+          <label class="field field-block">
+            <span>Mermaid 源码（可直接编辑）</span>
+            <textarea id="source" rows="14" spellcheck="false" autocomplete="off"></textarea>
+          </label>
+          <div class="row">
+            <button id="render" type="button" class="primary">重新渲染</button>
+            <button id="reset-source" type="button">还原示例源码</button>
+          </div>
+        </section>
+
+        <section class="group">
+          <h2>外观</h2>
+          <label class="field">
+            <span>Preset（主题 / 配色）</span>
+            <select id="preset"></select>
+          </label>
+          <label class="field">
+            <span>画布背景</span>
+            <select id="background">
+              <option value="theme">跟随配色</option>
+              <option value="transparent">透明</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>内边距 <output id="padding-value">24</output> px</span>
+            <input id="padding" type="range" min="0" max="72" step="2" value="24" />
+          </label>
+          <label class="check">
+            <input id="animated" type="checkbox" />
+            <span>流动连线（animatedEdges）</span>
+          </label>
+          <label class="check">
+            <input id="sketch" type="checkbox" />
+            <span>手绘风格（sketch）</span>
+          </label>
+        </section>
+
+        <section class="group">
+          <h2>导出</h2>
+          <div class="row">
+            <button id="export-svg" type="button">下载 SVG</button>
+            <button id="export-png" type="button">下载 PNG</button>
+          </div>
+          <div class="row">
+            <button id="copy-svg" type="button">复制 SVG 源码</button>
+            <button id="share" type="button">复制分享链接</button>
+          </div>
+          <p class="hint">分享链接把当前 preset / 示例 / 设置写进 URL hash，可直接深链到该状态。</p>
+        </section>
+      </aside>
+
+      <main class="stage-wrap">
+        <div class="stage-bar">
+          <dl class="meta" id="meta"></dl>
+        </div>
+        <div class="stage" id="stage">
+          <div class="stage-host" id="stage-host" data-render-state="idle"></div>
+        </div>
+        <div class="stage-foot">
+          <p class="status" id="status" role="status">准备就绪</p>
+          <div class="error" id="error" role="alert" hidden></div>
+          <details class="warnings" id="warnings-wrap" hidden>
+            <summary>渲染警告</summary>
+            <ul id="warnings"></ul>
+          </details>
+        </div>
+      </main>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

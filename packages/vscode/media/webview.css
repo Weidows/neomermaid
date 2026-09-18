@@ -1,0 +1,227 @@
+/*
+ * Preview chrome. Colours come from the VS Code theme when available, with
+ * hard-coded fallbacks so the same stylesheet works in the smoke-test page (and
+ * in a plain browser) without the editor's variables.
+ */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.neom-root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  font-family: var(--vscode-font-family, 'Segoe UI', system-ui, sans-serif);
+  font-size: var(--vscode-font-size, 13px);
+  color: var(--vscode-foreground, #cccccc);
+  background: var(--vscode-editor-background, #1e1e1e);
+}
+
+.neom-root[data-chrome='light'] {
+  color-scheme: light;
+}
+
+.neom-root[data-chrome='dark'] {
+  color-scheme: dark;
+}
+
+/* ------------------------------------------------------------------ toolbar */
+
+.neom-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+  background: var(--vscode-editorWidget-background, rgba(128, 128, 128, 0.08));
+  flex: 0 0 auto;
+}
+
+.neom-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.neom-actions {
+  margin-left: auto;
+}
+
+.neom-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.neom-label {
+  color: var(--vscode-descriptionForeground, #999999);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+select,
+input,
+button {
+  font-family: inherit;
+  font-size: inherit;
+  color: var(--vscode-dropdown-foreground, inherit);
+  background: var(--vscode-dropdown-background, rgba(128, 128, 128, 0.12));
+  border: 1px solid var(--vscode-dropdown-border, rgba(128, 128, 128, 0.4));
+  border-radius: 4px;
+  padding: 3px 6px;
+}
+
+input[type='number'] {
+  width: 58px;
+}
+
+input[type='color'] {
+  width: 28px;
+  height: 24px;
+  padding: 1px;
+}
+
+select:focus-visible,
+input:focus-visible,
+button:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder, #007fd4);
+  outline-offset: 1px;
+}
+
+.neom-btn {
+  cursor: pointer;
+  min-width: 26px;
+}
+
+.neom-btn:hover {
+  background: var(--vscode-toolbar-hoverBackground, rgba(128, 128, 128, 0.22));
+}
+
+.neom-btn:active {
+  transform: translateY(1px);
+}
+
+.neom-btn[data-role='zoom'] {
+  min-width: 52px;
+  font-variant-numeric: tabular-nums;
+}
+
+.neom-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+}
+
+.neom-hidden {
+  display: none !important;
+}
+
+/* -------------------------------------------------------------------- stage */
+
+.neom-stage {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px;
+  background: var(--vscode-editor-background, #1e1e1e);
+}
+
+.neom-canvas {
+  min-height: 100%;
+  text-align: center;
+}
+
+.neom-canvas svg {
+  display: block;
+  margin: 0 auto;
+}
+
+/* Transparency gets the usual checkerboard, so "transparent" is visible. */
+.neom-canvas[data-transparent='true'] {
+  background-image: linear-gradient(45deg, rgba(128, 128, 128, 0.18) 25%, transparent 25%),
+    linear-gradient(-45deg, rgba(128, 128, 128, 0.18) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgba(128, 128, 128, 0.18) 75%),
+    linear-gradient(-45deg, transparent 75%, rgba(128, 128, 128, 0.18) 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+}
+
+.neom-empty,
+.neom-error {
+  margin: 24px auto;
+  max-width: 620px;
+  padding: 14px 16px;
+  border: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+  border-radius: 6px;
+  text-align: left;
+  color: var(--vscode-descriptionForeground, #999999);
+  background: var(--vscode-editorWidget-background, rgba(128, 128, 128, 0.08));
+}
+
+.neom-error {
+  border-color: var(--vscode-inputValidation-errorBorder, #e5484d);
+  color: var(--vscode-foreground, #cccccc);
+}
+
+.neom-error strong {
+  color: var(--vscode-errorForeground, #e5484d);
+}
+
+.neom-error pre {
+  margin: 8px 0 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: var(--vscode-editor-font-family, ui-monospace, Consolas, monospace);
+  font-size: 12px;
+}
+
+.neom-fatal {
+  margin: 16px;
+  color: var(--vscode-errorForeground, #e5484d);
+}
+
+/* ------------------------------------------------------------------- status */
+
+.neom-statusbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 3px 10px;
+  flex: 0 0 auto;
+  border-top: 1px solid var(--vscode-panel-border, rgba(128, 128, 128, 0.35));
+  background: var(--vscode-statusBar-background, rgba(128, 128, 128, 0.08));
+  color: var(--vscode-descriptionForeground, #999999);
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.neom-file {
+  color: var(--vscode-foreground, #cccccc);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 40%;
+}
+
+.neom-status[data-tone='error'] {
+  color: var(--vscode-errorForeground, #e5484d);
+}
+
+.neom-warnings {
+  margin-left: auto;
+  color: var(--vscode-editorWarning-foreground, #cca700);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

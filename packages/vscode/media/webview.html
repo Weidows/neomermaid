@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Content-Security-Policy" content="{{csp}}" />
+    <title>NeoMermaid Preview</title>
+    <link rel="stylesheet" href="{{styleUri}}" />
+  </head>
+  <body>
+    <!-- The webview script mounts its toolbar, canvas and status bar in here. -->
+    <div id="neomermaid-root" class="neom-root" data-chrome="dark" data-fit="true"></div>
+    <script nonce="{{nonce}}" src="{{scriptUri}}"></script>
+  </body>
+</html>

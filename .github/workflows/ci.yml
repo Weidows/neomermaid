@@ -99,3 +99,17 @@ jobs:
         run: node scripts/build-vscode.mjs
       - name: Smoke test the webview in headless Chromium
         run: node packages/vscode/scripts/webview-smoke.mjs
+
+  demo:
+    name: Live demo
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build:core
+      - name: Smoke test the playground in headless Chromium
+        run: node apps/demo/scripts/smoke.mjs

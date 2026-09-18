@@ -1,0 +1,65 @@
+name: Deploy demo
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/demo/**'
+      - 'packages/core/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/deploy-demo.yml'
+  workflow_dispatch:
+
+# GitHub Pages deploy: build the demo, upload apps/demo/dist as the Pages
+# artifact. The app is built with `base: './'`, so it works from a project-site
+# subpath (/neomermaid/) exactly as it does from a local preview server.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install workspace dependencies
+        run: npm ci
+
+      - name: Typecheck core and demo
+        run: |
+          npm run typecheck --workspace @neomermaid/core
+          npm run typecheck --workspace @neomermaid/demo
+
+      - name: Build core (the demo imports @neomermaid/core/dist)
+        run: npm run build:core
+
+      - name: Build demo
+        run: npm run build:demo
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: apps/demo/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
