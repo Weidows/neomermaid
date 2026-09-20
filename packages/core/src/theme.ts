@@ -20,6 +20,11 @@ export interface ResolvedTheme {
   appearance: Appearance;
   /** `<theme>/<palette>` */
   preset: string;
+  /**
+   * True when the theme pins its own light/dark look and the chosen palette wants
+   * the opposite — the palette's hues still apply, but its canvas does not.
+   */
+  appearancePinned: boolean;
 }
 
 export interface ResolvedPreset {
@@ -88,6 +93,9 @@ export function resolveTheme(options: RenderOptions = {}): ResolvedTheme {
     tokens,
     appearance,
     preset: `${theme.id}/${palette.id}`,
+    appearancePinned: Boolean(
+      theme.appearance && theme.appearance !== 'inherit' && theme.appearance !== palette.appearance,
+    ),
   };
 }
 

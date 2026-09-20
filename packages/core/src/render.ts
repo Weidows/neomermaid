@@ -412,6 +412,20 @@ export async function render(source: string, options: RenderOptions = {}): Promi
 
   const processed = chosen.processed;
 
+  /*
+   * Silent surprises are worse than limitations. Four of the six themes pin their own
+   * light/dark look (neon/tech/glass/blueprint are dark by design, cartoon is light),
+   * so pairing one with a palette of the other appearance keeps the palette's hues but
+   * not its canvas. Say so instead of letting the picker look broken.
+   */
+  if (resolved.appearancePinned && processed.height > 0) {
+    processed.warnings.unshift(
+      `appearance: ${resolved.theme.id} pins a ${resolved.appearance} look, so ${resolved.palette.id}'s ` +
+        `${resolved.palette.appearance} canvas is not used (use an appearance-neutral theme such as "minimal", ` +
+        'or pick a palette of the same appearance)',
+    );
+  }
+
   return {
     svg: processed.svg,
     width: processed.width,

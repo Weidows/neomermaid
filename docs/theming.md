@@ -14,6 +14,25 @@ await render(source, { theme: 'minimal', styling: { geometry: { strokeWidth: 3 }
 
 Resolution order (last wins): **palette → theme → preset → `styling`**.
 
+## Themes that pin an appearance
+
+Themes and palettes own different things: **palettes own colour, themes own shape,
+mood and effects.** Four themes pin their own light/dark look (`neon`, `tech`,
+`glass`, `blueprint` are dark by design; `cartoon` is light), while `minimal`
+inherits whatever the palette wants.
+
+Pairing a pinned theme with a palette of the opposite appearance is allowed — the
+palette's hues and accents still flow through — but its canvas does not, and the
+render says so in `warnings`:
+
+```
+appearance: tech pins a dark look, so catppuccin-latte's light canvas is not used
+(use an appearance-neutral theme such as "minimal", or pick a palette of the same appearance)
+```
+
+So `minimal/catppuccin-latte` is light, `tech/catppuccin-latte` is dark with Latte
+hues. The CLI surfaces it in `--json`, and the VS Code preview shows the same list.
+
 ## Importing a VS Code theme
 
 `paletteFromShiki(theme, { id?, name? })` accepts anything shaped like a Shiki / VS
