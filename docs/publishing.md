@@ -98,11 +98,22 @@ Tokens) as `OVSX_PAT` and a publish step running `npx ovsx publish`. Not wired u
 ```bash
 # 1. versions must match the tag — the workflow verifies this before publishing
 npm version 0.1.2 --workspaces --no-git-tag-version
-# 2. commit, then tag and push
+# 2. the workspaces that DEPEND on core must accept the new version, or a clean
+#    `npm ci` on CI goes looking for the old one on the registry and 404s (this broke
+#    the first attempt at 0.1.1). packages/cli, packages/vscode and apps/demo all
+#    depend on @neomermaid/core, so keep them on a caret range and bump it here.
+# 3. sync the lockfile, then prove a clean install resolves
+npm install --package-lock-only --no-audit --no-fund
+npm ci --dry-run --no-audit --no-fund
+# 4. commit, then tag and push
 git commit -am "chore: release 0.1.2"
 git tag -a v0.1.2 -m "NeoMermaid 0.1.2"
 git push origin main --follow-tags
 ```
+
+If a release fails after the tag is pushed and nothing was published yet, fix the commit
+and move the tag (`git tag -f v0.1.2 && git push -f origin v0.1.2`) rather than burning
+a version number.
 
 `workflow_dispatch` also exists for dry runs. Note that the tag-match check reads
 `GITHUB_REF_NAME`, so a manual run must target a tag ref
