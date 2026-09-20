@@ -74,7 +74,11 @@ jobs:
           node packages/cli/bin/neomermaid.mjs gallery examples -o .gallery \
             --presets minimal/github-light,neon/dracula,tech/tokyo-night,cartoon/solarized-light,glass/nord,blueprint/dracula \
             --scale 1 --quiet
-          test "$(ls .gallery/*.png | wc -l)" -eq 60
+          # Derived from the corpus so adding an example cannot silently break CI.
+          expected=$(( $(ls examples/*.mmd | wc -l) * 6 ))
+          actual=$(ls .gallery/*.png | wc -l)
+          echo "rendered $actual of $expected"
+          test "$actual" -eq "$expected"
 
       - name: Upload gallery
         if: matrix.os == 'ubuntu-latest' && matrix.node == '22'
