@@ -1,5 +1,6 @@
 import { normalizePalette } from './palettes.js';
 import { asThemeDefinition, getTheme, THEME_IDS } from './themes.js';
+import { CONTRAST_LEVELS, ensureContrast, type ContrastLevel } from './contrast.js';
 import type {
   Appearance,
   DeepPartial,
@@ -69,7 +70,14 @@ export function resolveTheme(options: RenderOptions = {}): ResolvedTheme {
   const palette = normalizePalette(paletteRef ?? 'github-light');
 
   const base = theme.derive(palette);
-  const tokens = deepMerge(base, options.styling as DeepPartial<ThemeTokens>);
+  const merged = deepMerge(base, options.styling as DeepPartial<ThemeTokens>);
+
+  // Legibility is a guarantee, not a hope: theme authors pick colours by eye, so
+  // every text token is measured against the surfaces it is painted on and nudged
+  // along its luminance axis until it passes. `contrast: 'off'` opts out for
+  // pixel-exact reproductions.
+  const level: ContrastLevel = options.contrast ?? 'aa';
+  const tokens = level === 'off' ? merged : enforceContrast(merged, level);
 
   const appearance: Appearance =
     theme.appearance && theme.appearance !== 'inherit' ? theme.appearance : palette.appearance;
@@ -81,6 +89,38 @@ export function resolveTheme(options: RenderOptions = {}): ResolvedTheme {
     appearance,
     preset: `${theme.id}/${palette.id}`,
   };
+}
+
+/**
+ * Nudge every text token until it is legible on the surfaces it is painted on.
+ * Connectors are treated as meaningful graphics (3:1), node borders only at the
+ * stricter `aaa` level — a hairline border is decorative, a connector is not.
+ */
+function enforceContrast(tokens: ThemeTokens, level: Exclude<ContrastLevel, 'off'>): ThemeTokens {
+  const limits = CONTRAST_LEVELS[level];
+  const colors = { ...tokens.colors };
+  const behind = colors.bg;
+  const pass = (
+    key: keyof typeof colors,
+    surfaces: string[],
+    min: number,
+  ): void => {
+    let value = colors[key];
+    for (const surface of surfaces) {
+      value = ensureContrast(value, surface, min, { behind: surface === colors.bg ? '#ffffff' : behind });
+    }
+    colors[key] = value;
+  };
+
+  const nodeSurfaces = [colors.nodeFill, colors.nodeFillAlt, colors.clusterFill, colors.bg];
+  pass('nodeText', nodeSurfaces, limits.text);
+  // `clusterText` is painted on the translucent cluster fill *and* on the canvas.
+  pass('clusterText', [colors.clusterFill, colors.bg], limits.text);
+  pass('edgeLabelText', [colors.edgeLabelBg, colors.bg], limits.text);
+  pass('edge', [colors.bg], limits.graphic);
+  if (level === 'aaa') pass('nodeStroke', [colors.bg], limits.graphic);
+
+  return { ...tokens, colors };
 }
 
 export function listThemes(): ThemeSummary[] {

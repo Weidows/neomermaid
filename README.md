@@ -138,6 +138,41 @@ await render(source, { theme: brutalist, palette: 'solarized-light' });
 
 Full token reference: [docs/theming.md](./docs/theming.md).
 
+## Readability is guaranteed, not tuned
+
+Every theme × palette pair is measured, not eyeballed. Text colours are checked
+against the surfaces they are painted on with the WCAG formula and nudged along
+their luminance axis until they pass, so no combination can produce near-invisible
+labels:
+
+```ts
+await render(src, { preset: 'neon/dracula' });            // aa  — 4.5:1 (default)
+await render(src, { preset: 'neon/dracula', contrast: 'aaa' }); // 7:1
+await render(src, { preset: 'neon/dracula', contrast: 'off' }); // pixel-exact, no nudging
+```
+
+Series families (git branches, timeline bands, pie slices) get a *measured* label
+colour per slot, and pie labels are repainted from the slice they actually sit on.
+`npm run audit:legibility` rasterises the diagrams and compares every text element
+against the pixels behind it — the run that found the worst case (white on a cyan
+git branch pill at **1.01:1**) now reports zero failures.
+
+## Layout habits
+
+Arrangement is configurable without touching the syntax — `layout.direction`,
+`nodeSpacing`, `rankSpacing`, `wrappingWidth`, `curve` map onto mermaid's own
+layout knobs:
+
+```ts
+await render(src, { layout: { direction: 'auto', rankSpacing: 60, wrappingWidth: 180 } });
+```
+
+`direction: 'auto'` (default) respects a direction written in the source. When the
+source states none, a first attempt that comes out wider than `maxAspect`
+(default 3.2) is re-rendered in the other orientation and the better of the two is
+kept — a 3.5:1-wide flowchart becomes 696×832 instead of 1544×438, with a warning
+explaining why. `--direction TB` (CLI) pins it.
+
 ## CLI
 
 ```bash

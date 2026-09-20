@@ -27,7 +27,9 @@
     "typecheck": "npm run build:core && npm run typecheck --workspaces --if-present",
     "lint": "npm run typecheck",
     "gallery": "node packages/cli/bin/neomermaid.mjs gallery examples -o .gallery",
-    "prepublish:all": "npm run build && npm run test"
+    "prepublish:all": "npm run build && npm run test",
+    "audit:legibility": "node scripts/audit-legibility.mjs",
+    "audit:legibility:all": "node scripts/audit-legibility.mjs --all"
   },
   "devDependencies": {
     "esbuild": "^0.25.0",

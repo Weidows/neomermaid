@@ -5,6 +5,39 @@
 
 export type Appearance = 'light' | 'dark';
 
+import type { ContrastLevel } from './contrast.js';
+export type { ContrastLevel } from './contrast.js';
+
+/**
+ * Layout habits, not syntax: how the diagram is arranged, spaced and broken into
+ * lines. These map onto mermaid's own layout knobs, so the source stays vanilla
+ * mermaid — nothing here requires a new keyword.
+ */
+export interface LayoutOptions {
+  /**
+   * `auto` (default) keeps the direction written in the source, and only picks a
+   * better one when the source does not state it. `TB`/`TD`/`BT`/`LR`/`RL` forces
+   * one. An explicit direction in the source always wins over `auto`.
+   */
+  direction?: 'auto' | 'TB' | 'TD' | 'BT' | 'LR' | 'RL';
+  /** Gap between sibling nodes in px (mermaid default 45). */
+  nodeSpacing?: number;
+  /** Gap between ranks in px (mermaid default 45). */
+  rankSpacing?: number;
+  /** Label line-breaking width in px; 0 disables wrapping (mermaid default 200). */
+  wrappingWidth?: number;
+  /** Connector shape: `basis` (default), `linear`, `step`, `cardinal`, `monotone`. */
+  curve?: string;
+  /** Canvas padding in px added on top of `padding` (mermaid default 8). */
+  diagramPadding?: number;
+  /**
+   * When `direction: 'auto'` and the source states no direction, a first attempt
+   * wider or taller than this ratio is re-rendered in the other direction and the
+   * better of the two is kept. Default 3.2.
+   */
+  maxAspect?: number;
+}
+
 /** Semantic hues. A theme decides which ones it actually uses. */
 export interface Hues {
   blue: string;
@@ -155,6 +188,13 @@ export interface RenderOptions {
   mermaid?: MermaidConfigLike;
   /** Extra CSS appended to the generated stylesheet. */
   extraCss?: string;
+  /**
+   * Legibility guarantee for text/connector colours: `aa` (WCAG 4.5:1, default),
+   * `aaa` (7:1), or `off` for pixel-exact reproductions.
+   */
+  contrast?: ContrastLevel;
+  /** Arrangement and spacing — how the diagram is laid out, not how it is painted. */
+  layout?: LayoutOptions;
   /** SVG id / css scope. Auto-generated when omitted. */
   id?: string;
 }
@@ -171,6 +211,8 @@ export interface RenderResult {
   /** Resolved canvas colour, `transparent` when the canvas is see-through. */
   background: string;
   warnings: string[];
+  /** Flowchart direction actually used (`auto` may re-aim an unstated one). */
+  direction?: string;
 }
 
 export interface ThemeSummary {

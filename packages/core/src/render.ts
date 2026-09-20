@@ -1,4 +1,5 @@
 import { contrastText, mix, withAlpha } from './color.js';
+import { readOn, readablePair } from './contrast.js';
 import type { MermaidConfigLike, MermaidLike, Palette, RenderOptions, RenderResult } from './types.js';
 import { resolveTheme } from './theme.js';
 import { postProcessSvg } from './svg.js';
@@ -103,6 +104,66 @@ export function seriesPalette(palette: Palette, count = 12): string[] {
 }
 
 /**
+ * Series colours for the multi-series families, paired with a label colour that
+ * is *measured* to be readable on each fill. Fills may be nudged along their
+ * luminance axis when a mid-tone leaves no room for a legible label (mid-tones
+ * such as dracula's `#6272a4` cap out at ~4.2:1 with white), which is the
+ * difference between a pretty ramp and a readable one.
+ */
+export function readableSeries(palette: Palette, count = 12): SeriesColors {
+  const pairs = seriesPalette(palette, count).map((fill) => readablePair(fill));
+  return {
+    fills: pairs.map((p) => p.fill),
+    labels: pairs.map((p) => p.label),
+  };
+}
+
+export interface SeriesColors {
+  /** Series fills, safe to paint labels on. */
+  fills: string[];
+  /** Label colour that passes WCAG AA on the matching fill. */
+  labels: string[];
+}
+
+/** Flowchart/graph direction header — the only thing we are allowed to re-aim. */
+const FLOW_HEADER = /^([^\S\n]*)(flowchart|graph)\s+(TB|TD|BT|LR|RL)\b/m;
+const FLOW_ANY = /^([^\S\n]*)(flowchart|graph)\b/m;
+
+export type FlowDirection = 'TB' | 'TD' | 'BT' | 'LR' | 'RL';
+
+/** The direction written in the source, if the source states one. */
+export function sourceDirection(source: string): FlowDirection | null {
+  const hit = FLOW_HEADER.exec(source);
+  return (hit?.[3] as FlowDirection | undefined) ?? null;
+}
+
+/**
+ * Rewrite (or add) the direction of a flowchart/graph. Anything that is not a
+ * flowchart is returned untouched, so this can never damage another family's
+ * syntax. `TD`/`TB` are synonyms to mermaid.
+ */
+export function withDirection(source: string, direction: FlowDirection): string {
+  if (FLOW_HEADER.test(source)) {
+    return source.replace(FLOW_HEADER, (_match, pad: string, keyword: string) => `${pad}${keyword} ${direction}`);
+  }
+  if (FLOW_ANY.test(source)) {
+    return source.replace(FLOW_ANY, (_match, pad: string, keyword: string) => `${pad}${keyword} ${direction}`);
+  }
+  return source;
+}
+
+/** The opposite orientation: tall diagrams become wide, wide ones become tall. */
+function flipDirection(direction: FlowDirection): FlowDirection {
+  return direction === 'LR' || direction === 'RL' ? 'TB' : 'LR';
+}
+
+/** `TD` and `TB` are the same direction to mermaid. */
+function sameDirection(a: FlowDirection, b: FlowDirection): boolean {
+  const norm = (d: FlowDirection) => (d === 'TD' ? 'TB' : d);
+  return norm(a) === norm(b);
+}
+
+/**
  * Translate our tokens into mermaid's own configuration. This matters beyond
  * cosmetics: mermaid measures every label through its theme typography, so the
  * font family/size must be configured *before* layout or text would overflow.
@@ -112,7 +173,8 @@ export function buildMermaidConfig(options: RenderOptions): MermaidConfigLike {
   const { colors, typography: t, effects: e } = tokens;
   const fontFamily = t.fontFamily;
   const fontSize = `${t.fontSize}px`;
-  const series = seriesPalette(palette, 12);
+  const series = readableSeries(palette, 12);
+  const layout = options.layout ?? {};
 
   const themeVariables: Record<string, string> = {
     fontFamily,
@@ -158,16 +220,20 @@ export function buildMermaidConfig(options: RenderOptions): MermaidConfigLike {
     fillType1: colors.nodeFillAlt,
     fillType2: colors.clusterFill,
     // Sequence diagrams colour the autonumber text through an id selector.
-    sequenceNumberColor: contrastText(colors.accent),
-    ...Object.fromEntries(series.map((colour, i) => [`pie${i + 1}`, colour])),
-    ...Object.fromEntries(series.map((colour, i) => [`cScale${i}`, colour])),
-    ...Object.fromEntries(series.map((colour, i) => [`cScaleInv${i}`, mix(colour, '#000000', 0.35)])),
-    ...Object.fromEntries(series.map((colour, i) => [`cScaleLabel${i}`, contrastText(colour)])),
-    ...Object.fromEntries(series.slice(0, 8).map((colour, i) => [`git${i}`, colour])),
-    quadrant1Fill: withAlpha(series[0]!, 0.25, colors.nodeFillAlt),
-    quadrant2Fill: withAlpha(series[2]!, 0.25, colors.nodeFillAlt),
-    quadrant3Fill: withAlpha(series[5]!, 0.25, colors.nodeFillAlt),
-    quadrant4Fill: withAlpha(series[5]!, 0.18, colors.nodeFillAlt),
+    sequenceNumberColor: readOn(colors.accent),
+    ...Object.fromEntries(series.fills.map((colour, i) => [`pie${i + 1}`, colour])),
+    ...Object.fromEntries(series.fills.map((colour, i) => [`cScale${i}`, colour])),
+    ...Object.fromEntries(series.fills.map((colour, i) => [`cScaleInv${i}`, mix(colour, '#000000', 0.35)])),
+    // The numbered *label* variables are what git branch pills, timeline bands and
+    // pie labels actually read. Leaving them unset (or setting them from a single
+    // token) paints white text on cyan at 1.01:1 — invisible.
+    ...Object.fromEntries(series.labels.map((colour, i) => [`cScaleLabel${i}`, colour])),
+    ...Object.fromEntries(series.labels.map((colour, i) => [`gitBranchLabel${i}`, colour])),
+    ...Object.fromEntries(series.fills.slice(0, 8).map((colour, i) => [`git${i}`, colour])),
+    quadrant1Fill: withAlpha(series.fills[0]!, 0.25, colors.nodeFillAlt),
+    quadrant2Fill: withAlpha(series.fills[2]!, 0.25, colors.nodeFillAlt),
+    quadrant3Fill: withAlpha(series.fills[5]!, 0.25, colors.nodeFillAlt),
+    quadrant4Fill: withAlpha(series.fills[5]!, 0.18, colors.nodeFillAlt),
     quadrant1TextFill: colors.nodeText,
     quadrant2TextFill: colors.nodeText,
     quadrant3TextFill: colors.nodeText,
@@ -192,11 +258,12 @@ export function buildMermaidConfig(options: RenderOptions): MermaidConfigLike {
     flowchart: {
       useMaxWidth: false,
       htmlLabels: true,
-      curve: 'basis',
+      curve: layout.curve ?? 'basis',
       padding: 10,
-      nodeSpacing: 45,
-      rankSpacing: 45,
-      diagramPadding: 8,
+      nodeSpacing: layout.nodeSpacing ?? 45,
+      rankSpacing: layout.rankSpacing ?? 45,
+      diagramPadding: layout.diagramPadding ?? 8,
+      ...(layout.wrappingWidth === undefined ? {} : { wrappingWidth: layout.wrappingWidth }),
     },
     sequence: { useMaxWidth: false, boxMargin: 8, mirrorActors: false, wrap: false },
     class: { useMaxWidth: false },
@@ -262,26 +329,72 @@ export async function render(source: string, options: RenderOptions = {}): Promi
   const mermaid = await resolveMermaidInstance(options);
   const id = sanitizeId(options.id) ?? nextId();
 
-  let raw: string;
-  try {
-    raw = await enqueue(async () => {
+  const layout = options.layout ?? {};
+  const requested = layout.direction ?? 'auto';
+  const stated = sourceDirection(source);
+  const maxAspect = layout.maxAspect ?? 3.2;
+  const isFlow = FLOW_ANY.test(source);
+
+  // A forced direction re-aims the header; `auto` leaves the source's own choice
+  // alone (and only second-guesses it later, when the source made no choice).
+  const planned =
+    requested !== 'auto' && (!stated || !sameDirection(stated, requested))
+      ? withDirection(source, requested)
+      : source;
+
+  const attempt = async (text: string): Promise<ReturnType<typeof postProcessSvg>> => {
+    const raw = await enqueue(async () => {
       mermaid.initialize(buildMermaidConfig(options));
-      const out = await mermaid.render(id, source);
+      const out = await mermaid.render(id, text);
       return typeof out === 'string' ? out : out.svg;
     });
+    return postProcessSvg({
+      svg: raw,
+      id,
+      tokens: resolved.tokens,
+      background: options.background,
+      padding: options.padding,
+      extraCss: options.extraCss,
+      series: readableSeries(resolved.palette, 12),
+    });
+  };
+
+  let chosen: { processed: ReturnType<typeof postProcessSvg>; direction: FlowDirection };
+  try {
+    const first = stated ?? (requested === 'auto' ? 'TB' : requested);
+    chosen = { processed: await attempt(planned), direction: first };
+    /*
+     * Layout habit, not syntax: a flowchart nobody gave a direction to is laid out
+     * tall by default, and a wide graph then runs 4:1 sideways and reads badly in
+     * a README. When the source stayed silent we try the other orientation and
+     * keep whichever lands closer to a comfortable aspect ratio.
+     */
+    if (requested === 'auto' && !stated && isFlow && chosen.processed.height > 0) {
+      const aspect = chosen.processed.width / chosen.processed.height;
+      if (aspect > maxAspect) {
+        const flipped = flipDirection(first);
+        // The second opinion is optional: if it fails, the first render stands.
+        try {
+          const alternative = await attempt(withDirection(planned, flipped));
+          const altAspect =
+            alternative.height > 0 ? alternative.width / alternative.height : Number.POSITIVE_INFINITY;
+          if (Math.abs(altAspect - 1.6) < Math.abs(aspect - 1.6)) {
+            alternative.warnings.unshift(
+              `layout: re-rendered ${flipped} — the ${aspect.toFixed(1)}:1 ${first} attempt read badly`,
+            );
+            chosen = { processed: alternative, direction: flipped };
+          }
+        } catch {
+          chosen.processed.warnings.push(`layout: kept ${first}; the ${flipped} alternative failed to render`);
+        }
+      }
+    }
   } catch (error) {
     cleanupScratch(id);
     throw new RenderError(describeMermaidError(error), error, source);
   }
 
-  const processed = postProcessSvg({
-    svg: raw,
-    id,
-    tokens: resolved.tokens,
-    background: options.background,
-    padding: options.padding,
-    extraCss: options.extraCss,
-  });
+  const processed = chosen.processed;
 
   return {
     svg: processed.svg,
@@ -293,6 +406,7 @@ export async function render(source: string, options: RenderOptions = {}): Promi
     appearance: resolved.appearance,
     background: processed.background,
     warnings: processed.warnings,
+    direction: isFlow ? chosen.direction : undefined,
   };
 }
 

@@ -4,6 +4,30 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Legibility guarantee** (`contrast: 'aa' | 'aaa' | 'off'`, default `aa`): every
+  text token is measured against the surfaces it is painted on and nudged until it
+  meets the WCAG threshold, so no theme × palette pair can produce unreadable text.
+- **Measured series labels**: git branch pills, timeline bands and pie slices get a
+  label colour computed from the fill a reader actually sees, and pie percentages
+  are repainted from the slice they sit on. Fixes white-on-cyan branch labels that
+  measured **1.01:1** (invisible).
+- **`layout` options** — `direction`, `nodeSpacing`, `rankSpacing`,
+  `wrappingWidth`, `curve`, `diagramPadding`, `maxAspect`. `direction: 'auto'`
+  re-aims a flowchart whose source states no direction when the first attempt is
+  more extreme than `maxAspect` (3.5:1-wide → 696×832 instead of 1544×438) and
+  reports why in `warnings`.
+- **`scripts/audit-legibility.mjs`** (`npm run audit:legibility`): rasterises every
+  preset, measures each text element against the pixels behind it and exits
+  non-zero on failure — the regression net for the bug above.
+- New examples covering the families the audit was blind to: timeline, quadrant,
+  user journey, git graph and XY chart.
+- CLI: `--direction`, `--node-spacing`, `--rank-spacing`, `--wrap`, `--max-aspect`,
+  `--contrast`, plus `direction` in the `--json` payload.
+
 ## [0.1.0] — unreleased
 
 First public version. Everything below is new.

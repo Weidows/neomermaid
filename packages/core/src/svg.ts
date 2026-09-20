@@ -1,4 +1,5 @@
 import { isDark, mix, withAlpha } from './color.js';
+import { readOn } from './contrast.js';
 import { buildStylesheet, pillPadding, type StyleRefs } from './styles.js';
 import type { ThemeTokens } from './types.js';
 
@@ -31,6 +32,8 @@ export interface PostProcessOptions {
   /** Override the DOM implementation (tests, non-browser hosts). */
   dom?: DomLike;
   extraCss?: string;
+  /** Series fills + measured-readable labels, forwarded to the stylesheet. */
+  series?: { fills: string[]; labels: string[] };
 }
 
 export interface PostProcessResult {
@@ -290,6 +293,34 @@ export function shrinkForWidth(measured: number, available: number, floor = 0.72
 }
 
 /**
+ * Series labels that sit *on* a coloured shape must take their colour from that
+ * shape. Pie percentages are the clearest case: mermaid emits the slice paths
+ * first and the `<text class="slice">` labels in the same order, fills the slices
+ * from `pie1…n`, and paints every label with a single colour — which measured
+ * 1.12:1 (white on yellow) on most schemes. Pair them by index and repaint from
+ * the fill a reader actually sees.
+ */
+function repaintSeriesLabels(root: Element, warnings: string[]): number {
+  const slices = Array.from(root.querySelectorAll('path.pieCircle'))
+    .map((path) => path.getAttribute('fill'))
+    .filter((fill): fill is string => typeof fill === 'string' && fill !== 'none' && !fill.startsWith('url('));
+  if (!slices.length) return 0;
+
+  const labels = Array.from(root.querySelectorAll('text.slice'));
+  for (let index = 0; index < labels.length; index += 1) {
+    const sliceFill = slices[index % slices.length]!;
+    const label = labels[index]!;
+    // Inline style wins over both the attribute and the generated stylesheet.
+    const existing = label.getAttribute('style') ?? '';
+    label.setAttribute('style', `${existing}${existing && !existing.trimEnd().endsWith(';') ? ';' : ''}fill:${readOn(sliceFill)}`);
+  }
+  if (labels.length > slices.length) {
+    warnings.push(`${labels.length - slices.length} pie label(s) had no slice to measure against.`);
+  }
+  return labels.length;
+}
+
+/**
  * Some diagrams (mindmaps, for example) emit `g.edgeLabel` groups with no text
  * at all, anchored at the origin. Our pill styling would turn each of those into
  * a visible empty capsule in the top-left corner, so hide them.
@@ -393,6 +424,7 @@ export function postProcessSvg(options: PostProcessOptions): PostProcessResult {
       tokens: options.tokens,
       refs: { ...bg.refs },
       paintsBackground: bg.paints,
+      series: options.series,
     });
     const patched = options.svg
       .replace(/<defs[^>]*>/, (m) => `${m}${bg.defs}`)
@@ -524,10 +556,13 @@ export function postProcessSvg(options: PostProcessOptions): PostProcessResult {
   // 5. Hand-drawn nodes ship as unfilled outlines; give them the theme fill.
   fillSketchShapes(root, options.tokens);
 
+  // 6. Series text paints itself on a coloured shape: measure it, don't assume.
+  repaintSeriesLabels(root, warnings);
+
   /* ------------------------------------------------------------- stylesheet */
 
   const css = [
-    buildStylesheet({ id: options.id, tokens: options.tokens, refs, paintsBackground: background.paints }),
+    buildStylesheet({ id: options.id, tokens: options.tokens, refs, paintsBackground: background.paints, series: options.series }),
     options.extraCss ?? '',
   ]
     .filter(Boolean)

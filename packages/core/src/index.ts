@@ -19,6 +19,9 @@ export {
   RenderError,
   buildMermaidConfig,
   seriesPalette,
+  readableSeries,
+  sourceDirection,
+  withDirection,
   sanitizeId,
 } from './render.js';
 export { postProcessSvg, wrapInHtml } from './svg.js';
@@ -43,10 +46,22 @@ export {
   glowVariant,
 } from './color.js';
 
+export {
+  contrastRatio,
+  readOn,
+  ensureContrast,
+  readablePair,
+  passesContrast,
+  CONTRAST_LEVELS,
+} from './contrast.js';
+
+export type { ContrastLevel } from './contrast.js';
+
 /* --------------------------------------------------------------------- types */
 
 export type { Example } from './examples.js';
 export type { ResolvedTheme } from './theme.js';
+export type { SeriesColors, FlowDirection } from './render.js';
 export type { StyleRefs, StyleContext } from './styles.js';
 export type { PostProcessOptions, PostProcessResult, DomLike } from './svg.js';
 
@@ -58,6 +73,7 @@ export type {
   GeometryTokens,
   HueName,
   Hues,
+  LayoutOptions,
   MermaidConfigLike,
   MermaidLike,
   Palette,

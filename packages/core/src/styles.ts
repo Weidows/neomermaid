@@ -22,6 +22,8 @@ export interface StyleContext {
   refs: StyleRefs;
   /** True when a background rect is painted by the post-processor. */
   paintsBackground: boolean;
+  /** Series fills paired with their measured-readable label colours. */
+  series?: { fills: string[]; labels: string[] };
 }
 
 /** Padding used by edge-label pills — shared by the stylesheet and the SVG fitter. */
@@ -440,6 +442,58 @@ export function buildStylesheet(ctx: StyleContext): string {
   stroke: #e5484d;
   font-weight: 600;
 }`);
+
+  /* ------------------------------------------------- per-series label colours */
+
+  /*
+   * Families with numbered series (git branches, timeline bands) pick their text
+   * colour from a numbered mermaid variable, and they paint that text *inside* a
+   * `.label`-ish group — exactly where our generic `text { fill: … }` rule used to
+   * win and flatten every label to one colour. Measured result: white on dracula's
+   * cyan branch pill at 1.01:1, i.e. invisible. These rules are emitted last, so
+   * equal specificity resolves in their favour and each slot keeps its own
+   * measured label colour.
+   */
+  const series = ctx.series;
+  if (series?.labels?.length) {
+    const highest = Math.max(series.labels.length, 8);
+    for (let index = 0; index < highest; index += 1) {
+      const fill = series.fills[index % series.fills.length]!;
+      const label = series.labels[index % series.labels.length]!;
+      // gitGraph: `.branch-labelN` (0-based) wraps the branch pill and its text.
+      rules.push(
+        `${scope(id, [
+          `.branch-label${index}`,
+          `.branch-label${index} text`,
+          `.branch-label${index} tspan`,
+        ])} {\n  fill: ${v(label)};\n}`,
+      );
+      if (index > 0) {
+        rules.push(`${scope(id, [`.branch-label${index} rect`, `.branch-label${index} path`])} {\n  fill: ${v(fill)};\n}`);
+      }
+      // timeline: mermaid numbers sections from -1 upwards in its own stylesheet,
+      // so slot N owns class `section--1` for N = 0 and `section-(N-1)` after.
+      const suffix = index === 0 ? '-1' : String(index - 1);
+      const sectionClass = `.section-${suffix}`;
+      rules.push(
+        `${scope(id, [
+          `${sectionClass} text`,
+          `${sectionClass} tspan`,
+          `.timeline-node${sectionClass} text`,
+          `.timeline-node${sectionClass} tspan`,
+        ])} {\n  fill: ${v(label)};\n}`,
+      );
+      if (index < 8) {
+        rules.push(
+          `${scope(id, [
+            `.timeline-node${sectionClass} path`,
+            `.timeline-node${sectionClass} rect`,
+            `.timeline-node${sectionClass} circle`,
+          ])} {\n  fill: ${v(fill)};\n}`,
+        );
+      }
+    }
+  }
 
   return rules.join('\n\n');
 }

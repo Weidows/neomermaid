@@ -18,6 +18,8 @@ export interface RenderOutcome {
   palette: string;
   preset: string;
   appearance: 'light' | 'dark';
+  /** Flowchart direction actually used; `auto` may re-aim an unstated one. */
+  direction?: string;
   /** Resolved canvas colour, `transparent` when the diagram has no background. */
   background: string;
   warnings: string[];

@@ -54,8 +54,15 @@ STYLE OVERRIDES
       --stroke-color <c>  --node-color <c>         --text-color <c>
       --edge-color <c>    --bg-color <c>           --accent <c>
 
-MERMAID PASSTHROUGH
+LAYOUT  (arrangement, not syntax)
+      --direction <d>     auto (default) | TB | TD | BT | LR | RL
+      --node-spacing <px> --rank-spacing <px>
+      --wrap <px>         Label line-break width (0 disables)
       --curve <name>      basis | linear | step | cardinal …
+      --max-aspect <n>    Re-aim unstated directions wider than this (default 3.2)
+      --contrast <level>  aa (default) | aaa | off   — legibility guarantee
+
+MERMAID PASSTHROUGH
       --security <level>  strict | loose
       --mermaid-json <j>  Raw mermaid config merged last
 
@@ -151,6 +158,18 @@ function buildRenderOptions(r: ReturnType<typeof reader>): Record<string, unknow
       throw new Error(`--mermaid-json is not valid JSON: ${(error as Error).message}`);
     }
   }
+
+  const layout: Record<string, unknown> = {};
+  if (r.has('direction')) layout.direction = r.get('direction');
+  if (r.has('node-spacing')) layout.nodeSpacing = r.number('node-spacing');
+  if (r.has('rank-spacing')) layout.rankSpacing = r.number('rank-spacing');
+  if (r.has('wrap')) layout.wrappingWidth = r.number('wrap');
+  if (r.has('max-aspect')) layout.maxAspect = r.number('max-aspect');
+  if (r.has('curve')) layout.curve = r.get('curve');
+  if (Object.keys(layout).length) options.layout = layout;
+
+  // Legibility is on by default in the SDK; the flag exists to opt out.
+  if (r.has('contrast')) options.contrast = r.get('contrast');
 
   const styling: Record<string, unknown> = {};
   if (Object.keys(geometry).length) styling.geometry = geometry;
@@ -257,6 +276,7 @@ async function writeOutcome(
     palette: outcome.palette,
     preset: outcome.preset,
     appearance: outcome.appearance,
+    direction: outcome.direction,
     width: outcome.width,
     height: outcome.height,
     scale: plan.format === 'svg' || plan.format === 'html' ? 1 : plan.scale,

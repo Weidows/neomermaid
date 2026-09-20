@@ -1,0 +1,16 @@
+%% Release branches — Git graph
+%% Branch labels come from numbered git* variables; unreadable labels here were
+%% a real regression risk, which is why this example exists.
+gitGraph
+    commit id: "init"
+    branch develop
+    commit id: "scaffold"
+    branch feature/cli
+    commit id: "cli flags"
+    commit id: "cli tests"
+    checkout develop
+    merge feature/cli
+    branch feature/vscode
+    commit id: "webview"
+    checkout main
+    merge develop tag: "v0.2.0"
