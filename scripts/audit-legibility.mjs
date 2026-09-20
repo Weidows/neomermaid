@@ -137,6 +137,9 @@ function legibilityProbe({ svg, rasterScale }) {
        * anti-aliasing (a 28px timeline bar sampled ~12% lighter than the fill it
        * declares), so the semantic surface is measured too and preferred.
        */
+      const canvasRect = svgEl.querySelector('rect[class*="canvas"], rect.neom-canvas');
+      const canvasFill = canvasRect ? getComputedStyle(canvasRect).fill : null;
+
       const declaredBackdrop = (el) => {
         let node = el.parentElement;
         for (let depth = 0; depth < 3 && node && node !== svgEl; depth += 1) {
@@ -173,7 +176,14 @@ function legibilityProbe({ svg, rasterScale }) {
         if (own.width < 3 || own.height < 3) continue;
 
         const style = getComputedStyle(el);
-        const raw = style.fill && style.fill !== 'none' ? style.fill : style.color;
+        /*
+         * In an SVG context `fill` is an inherited property that also lands on HTML
+         * elements inside <foreignObject> — so a node label appeared to be painted
+         * with the node's fill colour while its real text colour was `color`. Measure
+         * `color` for HTML labels and `fill` for SVG text.
+         */
+        const isHtml = ['div', 'span', 'p'].includes(el.tagName.toLowerCase());
+        const raw = isHtml ? style.color : style.fill && style.fill !== 'none' ? style.fill : style.color;
         const glyph = parse(raw);
         if (!glyph || glyph.a === 0) continue;
 
@@ -234,9 +244,12 @@ function legibilityProbe({ svg, rasterScale }) {
         }
         if (!backdrop) continue;
 
-        const declared = declaredBackdrop(el);
+        let declared = declaredBackdrop(el);
+        // Inheritance is not a backdrop: a wrapper reporting the same colour as the
+        // glyph (an html-label div inheriting `color`) tells us nothing.
+        if (declared && distance(declared, glyph) < 12) declared = null;
         const pixelRatio = ratio(glyph, backdrop);
-        const value = declared ? ratio(glyph, declared) : pixelRatio;
+        const value = declared ? ratio(glyph, declared, canvasFill ?? '#ffffff') : pixelRatio;
         // WCAG: large text (>=24px, or >=18.66px bold) only needs 3:1.
         const bold = (parseInt(style.fontWeight, 10) || 400) >= 700;
         const large = fontSize >= 24 || (bold && fontSize >= 18.66);

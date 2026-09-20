@@ -154,8 +154,11 @@ await render(src, { preset: 'neon/dracula', contrast: 'off' }); // pixel-exact, 
 Series families (git branches, timeline bands, pie slices) get a *measured* label
 colour per slot, and pie labels are repainted from the slice they actually sit on.
 `npm run audit:legibility` rasterises the diagrams and compares every text element
-against the pixels behind it — the run that found the worst case (white on a cyan
-git branch pill at **1.01:1**) now reports zero failures.
+against the pixels behind it. The worst case it found (white on a cyan git branch
+pill at **1.01:1**, plus white-on-yellow pie percentages at 1.12:1 and journey
+labels painted with the node *fill* colour at 1:1) now reports zero failures; the
+wide run still flags small data-point labels in the quadrant and XY families —
+see [docs/contrast.md](./docs/contrast.md) for the current numbers and the limit.
 
 ## Layout habits
 

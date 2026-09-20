@@ -244,6 +244,22 @@ export function buildMermaidConfig(options: RenderOptions): MermaidConfigLike {
     quadrantYAxisTextFill: colors.clusterText,
     quadrantInternalBorderStrokeFill: colors.clusterStroke,
     quadrantExternalBorderStrokeFill: colors.nodeStroke,
+    /*
+     * XY charts ship their own light plot background and axis colours, so a dark
+     * theme rendered white text on a white canvas — measured 1.02:1, i.e. axis
+     * labels you cannot see. Paint the plot with the theme's surface instead.
+     */
+    'xyChart.backgroundColor': colors.nodeFill,
+    'xyChart.titleColor': colors.nodeText,
+    'xyChart.xAxisLabelColor': colors.clusterText,
+    'xyChart.xAxisTitleColor': colors.nodeText,
+    'xyChart.xAxisTickColor': colors.clusterText,
+    'xyChart.xAxisLineColor': colors.clusterStroke,
+    'xyChart.yAxisLabelColor': colors.clusterText,
+    'xyChart.yAxisTitleColor': colors.nodeText,
+    'xyChart.yAxisTickColor': colors.clusterText,
+    'xyChart.yAxisLineColor': colors.clusterStroke,
+    'xyChart.plotColorPalette': series.fills.join(','),
   };
 
   const config: MermaidConfigLike = {

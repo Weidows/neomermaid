@@ -394,19 +394,35 @@ export function buildStylesheet(ctx: StyleContext): string {
   fill: none;
   stroke-dasharray: 3 3;
 }`);
-  rules.push(`${scope(id, ['.sectionTitle', '.sectionTitle text', '.grid .tick text']) } {
+  /*
+   * Gantt and journey both use `.task` — gantt means the bar, journey means the
+   * label text. Styling `.task` globally painted journey's labels with the node
+   * *fill* colour, i.e. the same colour as the surface behind them (1:1, invisible).
+   * mermaid stamps the diagram type on the SVG root, so scope every gantt rule to it.
+   */
+  const gantt = (selectors: string[]): string =>
+    selectors.map((sel) => `#${id}[aria-roledescription="gantt"] ${sel}`).join(',\n  ');
+  rules.push(`${gantt(['.sectionTitle', '.sectionTitle text', '.grid .tick text']) } {
   fill: ${v(colors.clusterText)};
 }`);
-  rules.push(`${scope(id, ['.grid .tick line', '.grid path']) } {
+  rules.push(`${gantt(['.grid .tick line', '.grid path']) } {
   stroke: ${v(mix(colors.edge, colors.bg, 0.6))};
 }`);
-  rules.push(`${scope(id, ['.task']) } {
+  rules.push(`${gantt(['.task']) } {
   fill: ${v(colors.nodeFill)};
   stroke: ${v(colors.nodeStroke)};
 }`);
   // mermaid ships `.section{opacity:.2}` with fills only for section0/section2,
   // which makes the bands look random. One deliberate band colour for all of
   // them keeps gantt rows readable.
+  const journey = (selectors: string[]): string =>
+    selectors.map((sel) => `#${id}[aria-roledescription="journey"] ${sel}`).join(',\n  ');
+  // Journey labels are plain text (HTML labels in divs), so both `fill` and
+  // `color` must be set explicitly or they inherit whatever the last rule left.
+  rules.push(`${journey(['.task', '.journey-section', '.label', 'text', 'div', 'span']) } {
+  fill: ${v(colors.nodeText)};
+  color: ${v(colors.nodeText)};
+}`);
   rules.push(`${scope(id, ['.section', '.section0', '.section1', '.section2', '.section3']) } {
   fill: ${v(withAlpha(colors.nodeFillAlt, 0.5, 'transparent'))};
   stroke: none;

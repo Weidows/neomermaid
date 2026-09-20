@@ -1,5 +1,5 @@
 import { isDark, mix, withAlpha } from './color.js';
-import { readOn } from './contrast.js';
+import { CONTRAST_LEVELS, contrastRatio, readOn } from './contrast.js';
 import { buildStylesheet, pillPadding, type StyleRefs } from './styles.js';
 import type { ThemeTokens } from './types.js';
 
@@ -320,11 +320,6 @@ function repaintSeriesLabels(root: Element, warnings: string[]): number {
   return labels.length;
 }
 
-/**
- * Some diagrams (mindmaps, for example) emit `g.edgeLabel` groups with no text
- * at all, anchored at the origin. Our pill styling would turn each of those into
- * a visible empty capsule in the top-left corner, so hide them.
- */
 function hideEmptyLabels(root: Element): number {
   let hidden = 0;
   for (const group of Array.from(root.querySelectorAll('g.edgeLabel'))) {

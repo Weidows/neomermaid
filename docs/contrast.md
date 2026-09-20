@@ -63,6 +63,15 @@ check, so a legend colour swatch beside a label is not mistaken for its backdrop
 and falling back to sampled pixels. It exits non-zero when anything is below its
 threshold, so CI can gate on it.
 
+### Current status of the audit
+
+Measured on 15 examples × 4 presets (60 renders, 3020 text elements):
+
+| state | detail |
+| --- | --- |
+| fixed | git branch labels, timeline bands, pie percentages, journey labels, gantt rows, mindmap/ER labels — **0 findings** |
+| open | quadrant / XY chart **data-point labels** sit directly on their series colour (12px, measured 2.8–4.2:1). Axis labels in those families are themed now, but the point labels need the same per-slot treatment pie slices got. |
+
 Known limits, stated plainly:
 
 - Anti-aliasing and shadows make pixel sampling on very small shapes noisy; that is
@@ -71,3 +80,7 @@ Known limits, stated plainly:
   guarantees only cover solid and translucent surfaces NeoMermaid itself paints.
 - `aaa` on a mid-tone brand colour can force a visible shift; use `off` when brand
   fidelity matters more than contrast.
+- Colours a diagram author sets with `classDef … fill:#…` are *their* palette: mermaid
+  ignores the matching `color:` for html labels and NeoMermaid does not override an
+  explicit author choice, so pick a fill that suits the theme (the examples style
+  `stroke` instead of `fill` for exactly this reason).
