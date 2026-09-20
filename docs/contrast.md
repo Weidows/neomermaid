@@ -65,17 +65,28 @@ threshold, so CI can gate on it.
 
 ### Current status of the audit
 
-Measured on 15 examples × 4 presets (60 renders, 3020 text elements):
+Measured on the wide matrix — **48 presets × 15 examples = 720 renders, 36,598 text
+elements** — after the fixes below:
 
 | state | detail |
 | --- | --- |
-| fixed | git branch labels, timeline bands, pie percentages, journey labels, gantt rows, mindmap/ER labels — **0 findings** |
-| open | quadrant / XY chart **data-point labels** sit directly on their series colour (12px, measured 2.8–4.2:1). Axis labels in those families are themed now, but the point labels need the same per-slot treatment pie slices got. |
+| fixed | git branch pills (1.01:1), pie percentages (1.12:1), journey labels painted with the node *fill* (1:1), gantt rows, timeline bands, mindmap/ER label clipping — **0 findings** |
+| open | **3,787 findings with one root cause**: sequence / ER / class / mindmap renders carry **no canvas rect** and keep mermaid's default shapes (an actor box comes out `#eaeaea` with `stroke #666`), so the theme's light label text sits on transparency — measured white-on-white once rasterised. These families are not themed at all yet; on a dark host page the transparency hides it, on a white page or in a README it does not. |
+
+Reproduce the open case:
+
+```bash
+neomermaid render examples/auth-sequence.mmd -o seq.svg --preset minimal/dracula
+grep -c 'neom-canvas' seq.svg      # 0 — no canvas is painted
+grep -o 'fill="#eaeaea"' seq.svg   # mermaid's default actor box, not the theme
+```
 
 Known limits, stated plainly:
 
 - Anti-aliasing and shadows make pixel sampling on very small shapes noisy; that is
-  why the declared surface is preferred when a label is genuinely contained.
+  why an *opaque* declared surface is preferred when a label is genuinely contained,
+  while translucent fills are measured from the raster (which already contains the
+  real composite — assuming the canvas is painted, see above).
 - Gradients and photographic backgrounds are out of scope: `maxAspect`-style
   guarantees only cover solid and translucent surfaces NeoMermaid itself paints.
 - `aaa` on a mid-tone brand colour can force a visible shift; use `off` when brand

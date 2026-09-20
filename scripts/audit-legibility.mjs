@@ -125,6 +125,21 @@ function legibilityProbe({ svg, rasterScale }) {
         };
         return 0.2126 * f(c.r) + 0.7152 * f(c.g) + 0.0722 * f(c.b);
       };
+      /**
+       * Lay a possibly-translucent colour over its backdrop. Skipping this made a
+       * 25%-tinted quadrant fill (`rgba(255,85,85,0.25)`) measure as opaque red, so
+       * white labels on a dark tint looked like failures when they were fine.
+       */
+      const over = (top, bottom) => {
+        if (!top) return bottom;
+        if (top.a === undefined || top.a >= 1 || !bottom) return { ...top, a: 1 };
+        return {
+          r: top.r * top.a + bottom.r * (1 - top.a),
+          g: top.g * top.a + bottom.g * (1 - top.a),
+          b: top.b * top.a + bottom.b * (1 - top.a),
+          a: 1,
+        };
+      };
       const ratio = (a, b) => {
         const [hi, lo] = lum(a) > lum(b) ? [lum(a), lum(b)] : [lum(b), lum(a)];
         return (hi + 0.05) / (lo + 0.05);
@@ -249,7 +264,13 @@ function legibilityProbe({ svg, rasterScale }) {
         // glyph (an html-label div inheriting `color`) tells us nothing.
         if (declared && distance(declared, glyph) < 12) declared = null;
         const pixelRatio = ratio(glyph, backdrop);
-        const value = declared ? ratio(glyph, declared, canvasFill ?? '#ffffff') : pixelRatio;
+        /*
+         * Only an *opaque* declared fill is trustworthy on its own. For a translucent
+         * one the raster already contains the real composite — over whatever canvas
+         * the theme painted, gradients included — so the pixels win.
+         */
+        const opaque = declared && (declared.a === undefined || declared.a >= 0.999);
+        const value = opaque ? ratio(glyph, declared) : pixelRatio;
         // WCAG: large text (>=24px, or >=18.66px bold) only needs 3:1.
         const bold = (parseInt(style.fontWeight, 10) || 400) >= 700;
         const large = fontSize >= 24 || (bold && fontSize >= 18.66);
@@ -271,9 +292,10 @@ function legibilityProbe({ svg, rasterScale }) {
             tag: el.tagName.toLowerCase(),
             fontSize: Math.round(fontSize * 10) / 10,
             glyph: raw,
-            backdrop: declared
-              ? `rgb(${declared.r}, ${declared.g}, ${declared.b})`
-              : `rgb(${backdrop.r}, ${backdrop.g}, ${backdrop.b})`,
+            backdrop: (() => {
+              if (opaque && declared) return `rgb(${Math.round(declared.r)}, ${Math.round(declared.g)}, ${Math.round(declared.b)})`;
+              return `rgb(${backdrop.r}, ${backdrop.g}, ${backdrop.b}) (sampled)`;
+            })(),
             pixelBackdrop: `rgb(${backdrop.r}, ${backdrop.g}, ${backdrop.b})`,
             pixelRatio: Math.round(pixelRatio * 100) / 100,
             ratio: Math.round(value * 100) / 100,
