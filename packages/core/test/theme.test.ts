@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { deepMerge, listThemes, parsePreset, resolveTheme } from '../src/theme.js';
-import { listPalettes } from '../src/palettes.js';
+import { PALETTES, listPalettes } from '../src/palettes.js';
 import { listPresets } from '../src/index.js';
 
 describe('presets', () => {
@@ -26,10 +26,13 @@ describe('presets', () => {
   });
 
   it('exposes the full theme × palette matrix', () => {
+    // Derived, not hard-coded: adding a palette must not need a test edit.
     expect(listThemes().length).toBe(6);
-    expect(listPalettes().length).toBe(11);
-    expect(listPresets().length).toBe(66);
+    expect(listPalettes().length).toBe(Object.keys(PALETTES).length);
+    expect(listPalettes().length).toBeGreaterThanOrEqual(18);
+    expect(listPresets().length).toBe(listThemes().length * listPalettes().length);
     expect(listPresets()).toContain('cartoon/solarized-light');
+    expect(listPresets()).toContain('neon/catppuccin-latte');
   });
 });
 

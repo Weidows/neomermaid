@@ -1,7 +1,7 @@
 # Theming reference
 
 A theme decides **shape, weight and mood**. A palette decides **colour**. Keeping
-them apart is why 6 themes × 11 palettes give 66 genuinely different looks from
+them apart is why 6 themes × 20 palettes give 120 genuinely different looks from
 one code path — and why adding a palette never breaks a theme.
 
 ```ts
@@ -13,6 +13,26 @@ await render(source, { theme: 'minimal', styling: { geometry: { strokeWidth: 3 }
 ```
 
 Resolution order (last wins): **palette → theme → preset → `styling`**.
+
+## Importing a VS Code theme
+
+`paletteFromShiki(theme, { id?, name? })` accepts anything shaped like a Shiki / VS
+Code theme (`{ name, type, colors, tokenColors }`) and returns a normal `Palette`:
+
+| palette slot | theme key(s), first match wins |
+| --- | --- |
+| `bg` | `editor.background`, `editorGroup.background`, `sideBar.background` |
+| `text` | `editor.foreground`, `foreground` |
+| `textMuted` | `editorLineNumber.foreground`, `descriptionForeground`, `tab.inactiveForeground` |
+| `border` | `panel.border`, `editorWidget.border`, `input.border`, `contrastBorder` |
+| `surface` | `editorWidget.background`, `sideBar.background`, `editorGroupHeader.tabsBackground` |
+| `accent` | `button.background`, `focusBorder`, `textLink.foreground` |
+| `hues.*` | `tokenColors` scopes (function → blue, keyword → red, string → green, number → yellow, type → cyan, variable → purple, tag → pink, parameter → orange) |
+
+Anything the theme does not declare is derived from the two colours every theme has,
+and every derived slot is passed through the measured contrast helper — so an
+imported theme is guaranteed to be as legible as a hand-tuned one, and
+`isShikiTheme(value)` lets you validate a pasted JSON blob first.
 
 ## Themes
 

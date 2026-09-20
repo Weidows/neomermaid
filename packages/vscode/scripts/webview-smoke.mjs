@@ -306,7 +306,7 @@ async function main() {
     );
     check(
       'core catalog is populated from the bundle (no host catalog needed)',
-      shell.themes.length === 6 && shell.palettes.length === 11 && shell.themes.includes('neon') && shell.palettes.includes('dracula'),
+      shell.themes.length === 6 && shell.palettes.length >= 18 && shell.themes.includes('neon') && shell.palettes.includes('dracula'),
       `${shell.themes.length} themes · ${shell.palettes.length} palettes`,
     );
 

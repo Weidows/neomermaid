@@ -33,6 +33,33 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   plus a labelled text fallback for the other families. Zero DOM dependencies, so it
   works in plain Node.`
 
+## [Unreleased] — palettes
+
+### Added
+
+- **Nine more palettes with light/dark pairs** (20 total, 120 looks): Tokyo Night
+  Light, Catppuccin Latte, GitHub Dark, Solarized Dark, One Light, Rosé Pine Dawn,
+  Zinc Light/Dark and Gruvbox Light — so switching your editor's theme has an
+  equivalent on the diagram side.
+- **`paletteFromShiki(theme)` / `isShikiTheme(theme)`**: turn any VS Code / Shiki
+  theme into a palette (background + foreground + syntax colours become the hue
+  ramp). The result passes the same contrast contract as the built-ins: body text is
+  nudged to 7:1 and connectors to 3:1 against *every* surface they can land on, and
+  an invisible accent is repaired rather than shipped.
+- A palette contract test that asserts `text/surface >= 7`, `text/bg >= 7`,
+  `muted/surface >= 4.5`, `edge/bg >= 3` and `border/surface >= 1.25` for every
+  palette, looping the catalogue so a new scheme cannot land without meeting it
+  (borders stay quiet on purpose: an authentic dark hairline measures ~1.3).
+
+### Changed
+
+- Palettes that conflicted with the contract were nudged where it mattered:
+  One Dark Pro's widget surface, muted grey, connector and body colour; Solarized
+  Light's muted tone and connector; the connectors of Nord, Nord Light and Tokyo
+  Night; Catppuccin Latte's and Rosé Pine Dawn's body text; Tokyo Night Light's
+  surface; Zinc Light's hairline. Brand hues and the recognisable canvas colours are
+  untouched, and each nudge is noted next to the value.
+
 ## [0.1.0] — unreleased
 
 First public version. Everything below is new.

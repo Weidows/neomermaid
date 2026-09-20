@@ -3,7 +3,7 @@
  * the webview renders with, and knows how to follow the editor theme.
  *
  * The catalog comes straight from `@neomermaid/core`, so the pickers, the
- * validation here and the CLI all agree on the same 66 presets.
+ * validation here and the CLI all agree on the same preset catalogue.
  */
 
 import * as vscode from 'vscode';

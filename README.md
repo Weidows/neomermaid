@@ -9,7 +9,7 @@ Same syntax. Completely different look. One engine behind a VS Code preview, a C
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 ![Themes](https://img.shields.io/badge/themes-6-8b5cf6)
 ![Palettes](https://img.shields.io/badge/palettes-11-06b6d4)
-![Presets](https://img.shields.io/badge/looks-66-f472b6)
+![Presets](https://img.shields.io/badge/looks-120-f472b6)
 [![Live demo](https://img.shields.io/badge/live%20demo-open-22c55e)](https://blog.weidows.tech/neomermaid/)
 
 </div>
@@ -33,7 +33,7 @@ The "before" is mermaid's own stock `default` theme, rendered by mermaid itself 
   <img alt="NeoMermaid rendering a release pipeline" src="./docs/images/hero-light.png">
 </picture>
 
-## Six themes × eleven palettes = 66 looks
+## Six themes × twenty palettes = 120 looks
 
 | | | |
 |---|---|---|
@@ -137,6 +137,25 @@ await render(source, { theme: brutalist, palette: 'solarized-light' });
 ```
 
 Full token reference: [docs/theming.md](./docs/theming.md).
+
+## Bring your own editor theme
+
+Twenty palettes ship built in, but the editor is where your colours actually live —
+so any VS Code / Shiki theme can become one:
+
+```ts
+import { paletteFromShiki, render } from '@neomermaid/core';
+import githubDark from 'shiki/themes/github-dark.mjs';   // or any VS Code theme JSON
+
+const palette = paletteFromShiki(githubDark.default);     // background, foreground,
+                                                          // syntax colours -> hue ramp
+const { svg } = await render(src, { preset: 'tech', palette });
+```
+
+The import is not a colour dump: body text is nudged to 7:1 and connectors to 3:1
+against every surface they can land on, and an accent that would be invisible on the
+surface is repaired instead of shipped. `isShikiTheme(value)` tells you whether a
+parsed JSON file is a theme at all.
 
 ## Readability is guaranteed, not tuned
 

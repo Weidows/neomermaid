@@ -29,6 +29,7 @@ export { asciiFromSvg, renderAscii, ASCII_FALLBACK_PREFIX } from './ascii.js';
 export { buildStylesheet, buildHostStyles } from './styles.js';
 export { resolveTheme, parsePreset, deepMerge, listThemes } from './theme.js';
 export { PALETTES, PALETTE_IDS, getPalette, listPalettes, normalizePalette, isPalette } from './palettes.js';
+export { paletteFromShiki, isShikiTheme, shikiLabelColour } from './shiki.js';
 export { THEMES, THEME_IDS, getTheme, defineTheme, asThemeDefinition } from './themes.js';
 export { EXAMPLES, DEFAULT_EXAMPLE, getExample } from './examples.js';
 
@@ -62,6 +63,7 @@ export type { ContrastLevel } from './contrast.js';
 
 export type { Example } from './examples.js';
 export type { AsciiOptions } from './ascii.js';
+export type { ShikiThemeLike } from './shiki.js';
 export type { ResolvedTheme } from './theme.js';
 export type { SeriesColors, FlowDirection } from './render.js';
 export type { StyleRefs, StyleContext } from './styles.js';

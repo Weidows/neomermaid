@@ -1,7 +1,7 @@
 # NeoMermaid for VS Code
 
 A preview for [mermaid](https://mermaid.js.org) diagrams that uses the NeoMermaid
-SDK instead of mermaid's default styling: six themes × eleven colour schemes,
+SDK instead of mermaid's default styling: six themes × twenty colour schemes,
 canvas/transparency control, zoom/fit and SVG/PNG export.
 
 Because the panel renders with `@neomermaid/core` inside the webview, a diagram

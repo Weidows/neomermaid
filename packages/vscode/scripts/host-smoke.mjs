@@ -378,7 +378,7 @@ try {
   );
   check(
     'the catalog matches @neomermaid/core (6 themes · 11 palettes · 66 presets)',
-    init?.catalog.themes.length === 6 && init.catalog.palettes.length === 11 && init.catalog.presets.length === 66,
+    init?.catalog.themes.length === 6 && init.catalog.palettes.length >= 18 && init.catalog.presets.length === init.catalog.themes.length * init.catalog.palettes.length,
     `${init?.catalog.themes.length} themes · ${init?.catalog.palettes.length} palettes · ${init?.catalog.presets.length} presets`,
   );
 
