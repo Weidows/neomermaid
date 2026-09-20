@@ -60,9 +60,20 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ env.NPM_TOKEN }}
 
-      - name: Skip notice
+      - name: NPM_TOKEN is missing
         if: env.NPM_TOKEN == ''
-        run: echo "NPM_TOKEN is not configured — packages were built and tested, but not published."
+        shell: bash
+        run: |
+          echo "::warning::NPM_TOKEN is empty — nothing was published."
+          echo "A registered secret whose value is blank expands to '' here, which is why"
+          echo "this gate exists: check with"
+          echo "  gh api repos/$GITHUB_REPOSITORY/actions/secrets --jq '.secrets[].name'"
+          echo "then re-set it (npmjs.com -> Access Tokens -> Granular, scope @neomermaid,"
+          echo "Read and write, bypass 2FA) via: gh secret set NPM_TOKEN"
+          echo "See docs/publishing.md. A tag release fails here on purpose: a tag that"
+          echo "silently does not publish is worse than a red run."
+          # A tag release is meant to publish; a manual dry run is not.
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then exit 1; fi
 
       - name: Build the VS Code extension
         run: node scripts/build-vscode.mjs

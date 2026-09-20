@@ -16,6 +16,15 @@ release** — the workflow skips that step and says so.
 gh secret set NPM_TOKEN --repo Weidows/neomermaid
 ```
 
+Verify the secret actually reaches a workflow before trusting a release: a registered
+secret whose **value** is blank still shows up in `gh secret list` but expands to `''`
+inside the workflow, which is exactly how the 0.1.1 release skipped both publish steps
+without an error. The workflow now fails a tag release in that case.
+
+```bash
+gh api repos/Weidows/neomermaid/actions/secrets --jq '.secrets[] | "\(.name)	\(.created_at)"'
+```
+
 A token that can publish to the `@neomermaid` scope. The registry is configured by
 `actions/setup-node` (`registry-url: https://registry.npmjs.org`) and passed as
 `NODE_AUTH_TOKEN`; `--provenance` signs the tarball with the workflow's OIDC identity,
