@@ -306,6 +306,86 @@ export const EXAMPLES: Example[] = [
   ok -- "no" --> rollback["Rollback"]
   ok -- "yes" --> done(["Release done"])`,
   },
+  {
+    id: 'git-branches',
+    title: 'Release branches',
+    description: 'Git graph',
+    source: `gitGraph
+    commit id: "init"
+    branch develop
+    commit id: "scaffold"
+    branch feature/cli
+    commit id: "cli flags"
+    commit id: "cli tests"
+    checkout develop
+    merge feature/cli
+    branch feature/vscode
+    commit id: "webview"
+    checkout main
+    merge develop tag: "v0.2.0"`,
+  },
+  {
+    id: 'journey-onboarding',
+    title: 'Onboarding funnel',
+    description: 'User journey',
+    source: `journey
+    title First-week onboarding
+    section Sign up
+        Land on pricing: 5: Me
+        Create account: 4: Me
+        Verify email: 2: Me, Support
+    section First project
+        Import data: 3: Me
+        Invite team: 3: Me, Teammate
+        First share: 5: Me, Teammate
+    section Habit
+        Weekly digest: 4: Me
+        Upgrade to team: 3: Me, Sales`,
+  },
+  {
+    id: 'quadrant-priorities',
+    title: 'Prioritisation',
+    description: 'Quadrant chart',
+    source: `quadrantChart
+    title Feature prioritisation
+    x-axis Low effort --> High effort
+    y-axis Low impact --> High impact
+    quadrant-1 Ship it
+    quadrant-2 Plan it
+    quadrant-3 Drop it
+    quadrant-4 Quick wins
+    Dark mode: [0.3, 0.8]
+    SSO: [0.7, 0.75]
+    Audit log: [0.65, 0.4]
+    Bulk import: [0.25, 0.3]
+    Mobile app: [0.85, 0.9]`,
+  },
+  {
+    id: 'timeline-rollout',
+    title: 'Rollout plan',
+    description: 'Timeline',
+    source: `timeline
+    title Platform rollout
+    section Phase 1
+        Q1 : Schema design : Internal review
+        2026-02 : Migration scripts
+    section Phase 2
+        Q2 : Canary in eu-west
+        2026-04 : Public beta
+    section Phase 3
+        Q3 : GA announcement`,
+  },
+  {
+    id: 'xychart-latency',
+    title: 'Latency budget',
+    description: 'XY chart',
+    source: `xychart-beta
+    title "p95 latency by release (ms)"
+    x-axis [v0.1, v0.2, v0.3, v0.4, v0.5]
+    y-axis "ms" 0 --> 400
+    bar [180, 165, 210, 150, 132]
+    line [180, 165, 210, 150, 132]`,
+  },
 ];
 
 export function getExample(id: string): Example | undefined {
