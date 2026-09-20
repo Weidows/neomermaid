@@ -31,7 +31,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   diagrams an agent or a terminal can read without an image — flowcharts with
   subgraphs and edge labels, sequence diagrams with lifelines and numbered messages,
   plus a labelled text fallback for the other families. Zero DOM dependencies, so it
-  works in plain Node.`,1
+  works in plain Node.`
 
 ## [0.1.0] — unreleased
 
