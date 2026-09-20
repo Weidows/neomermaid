@@ -71,14 +71,15 @@ elements** — after the fixes below:
 | state | detail |
 | --- | --- |
 | fixed | git branch pills (1.01:1), pie percentages (1.12:1), journey labels painted with the node *fill* (1:1), gantt rows, timeline bands, mindmap/ER label clipping — **0 findings** |
-| open | **3,787 findings with one root cause**: sequence / ER / class / mindmap renders carry **no canvas rect** and keep mermaid's default shapes (an actor box comes out `#eaeaea` with `stroke #666`), so the theme's light label text sits on transparency — measured white-on-white once rasterised. These families are not themed at all yet; on a dark host page the transparency hides it, on a white page or in a README it does not. |
+| open | **3,787 findings, concentrated in sequence / ER / class / mindmap** (338 of 720 runs; 620 in the ER example, 597 in the class example). What is *verified*: those renders keep mermaid's default shapes — a sequence actor box comes out `fill #eaeaea` with `stroke #666` regardless of theme — the ER example emits no themed shape rects at all, and the sampled backdrop behind their labels resolves to white, so the theme's light label text measures 1.0–1.3:1. On a dark host page that is invisible; in a README or on a white page it is not. The exact mechanism (whether the canvas rect is painted for these families, and why their shapes miss our selectors) is **not yet confirmed** — the evidence above is what a fix should start from. |
 
 Reproduce the open case:
 
 ```bash
 neomermaid render examples/auth-sequence.mmd -o seq.svg --preset minimal/dracula
-grep -c 'neom-canvas' seq.svg      # 0 — no canvas is painted
-grep -o 'fill="#eaeaea"' seq.svg   # mermaid's default actor box, not the theme
+grep -o 'fill="#eaeaea"' seq.svg | wc -l   # mermaid's default actor box, not the theme
+neomermaid render examples/commerce-er.mmd -o er.svg --preset minimal/dracula
+grep -c 'class="er' er.svg                 # entity shapes carry no themed fill
 ```
 
 Known limits, stated plainly:
