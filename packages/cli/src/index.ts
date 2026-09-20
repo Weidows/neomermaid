@@ -67,6 +67,11 @@ MERMAID PASSTHROUGH
       --mermaid-json <j>  Raw mermaid config merged last
 
 AGENT / AUTOMATION
+      ascii <file>        Text rendering an agent or terminal can read
+          --width <n>     Max columns (default 120)   --colour  ANSI truecolor
+          --ascii-only    Plain ASCII instead of box drawing
+          --no-labels     Structure without label text
+
   -j, --json              Machine readable result on stdout
       --embed             Include the rendered svg in the json payload
       --quiet             Suppress progress chatter on stderr
@@ -469,6 +474,40 @@ function commandExamples(json: boolean): number {
   return 0;
 }
 
+/**
+ * `neomermaid ascii` — project a rendered diagram to text so an agent, a terminal or
+ * a commit message can show it without an image. Same preset pipeline as `render`.
+ */
+async function commandAscii(argv: string[]): Promise<number> {
+  const parsed = parseArgs(argv);
+  const r = reader(parsed);
+  const input = parsed.positional[0];
+  const source = !input || input === '-' ? readFileSync(0, 'utf8') : readFileSync(input, 'utf8');
+  const { asciiFromSvg } = await import('@neomermaid/core');
+
+  const text = await withPilot(
+    { scale: 1 },
+    async (pilot) => {
+      const outcome = await pilot.render(source, buildRenderOptions(r));
+      return asciiFromSvg(outcome.svg, {
+        maxWidth: r.number('width') ?? 120,
+        padding: r.number('padding') ?? 1,
+        useAscii: r.bool('ascii-only'),
+        showLabels: !r.bool('no-labels'),
+        colour: r.bool('colour') || r.bool('color'),
+      });
+    },
+  );
+
+  if (r.bool('json')) {
+    const payload = { ok: true, source: input ?? 'stdin', format: 'ascii', ascii: text };
+    process.stdout.write(`${JSON.stringify(payload, null, 2)}\n`);
+  } else {
+    process.stdout.write(text.endsWith('\n') ? text : `${text}\n`);
+  }
+  return 0;
+}
+
 async function commandDoctor(json: boolean): Promise<number> {
   const browsers = findBrowsers();
   const bundle = coreBundlePath();
@@ -518,6 +557,8 @@ export async function run(argv: string[]): Promise<number> {
         return await commandRender(rest);
       case 'gallery':
         return await commandGallery(rest);
+      case 'ascii':
+        return await commandAscii(rest);
       case 'themes':
       case 'palettes':
       case 'presets':

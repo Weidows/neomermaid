@@ -203,6 +203,26 @@ neomermaid doctor                                                # which browser
 Errors return `{"ok": false, "error": "…"}` with a non-zero exit code, so an agent can branch on it.
 Run `neomermaid help` for every flag ([full reference](./docs/cli.md)).
 
+## Read it in a terminal or hand it to an agent
+
+A diagram is often the wrong payload: an agent, a log line or a commit message wants
+text. `ascii` projects the *rendered* diagram (same theme, same layout) into Unicode
+box drawing, with no image, no browser screenshot and no DOM:
+
+```bash
+neomermaid ascii flow.mmd --preset neon/dracula --width 104
+```
+
+```
+ ╭─Local───────────────╮╭─CI──────────────╮╭─Production────╮
+ │  Write code  │◀─fail─▶│  Tests  │──pass─▶│  Lint  ││  Build artifact  │
+ ╰──────────────╯        ╰─────────╯        ╰────────╯╰──────────────────╯
+```
+
+Also available as `asciiFromSvg(svg)` / `renderAscii(source, options)` in the SDK,
+so a host can render once and serve both an image and text. Flags: `--width`,
+`--colour` (24-bit ANSI), `--ascii-only`, `--no-labels`, `--json`.
+
 ## VS Code
 
 Open a `.mmd` / `.mermaid` file and hit <kbd>Ctrl/Cmd</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd>:

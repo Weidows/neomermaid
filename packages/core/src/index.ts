@@ -25,6 +25,7 @@ export {
   sanitizeId,
 } from './render.js';
 export { postProcessSvg, wrapInHtml } from './svg.js';
+export { asciiFromSvg, renderAscii, ASCII_FALLBACK_PREFIX } from './ascii.js';
 export { buildStylesheet, buildHostStyles } from './styles.js';
 export { resolveTheme, parsePreset, deepMerge, listThemes } from './theme.js';
 export { PALETTES, PALETTE_IDS, getPalette, listPalettes, normalizePalette, isPalette } from './palettes.js';
@@ -60,6 +61,7 @@ export type { ContrastLevel } from './contrast.js';
 /* --------------------------------------------------------------------- types */
 
 export type { Example } from './examples.js';
+export type { AsciiOptions } from './ascii.js';
 export type { ResolvedTheme } from './theme.js';
 export type { SeriesColors, FlowDirection } from './render.js';
 export type { StyleRefs, StyleContext } from './styles.js';
