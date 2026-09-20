@@ -33,6 +33,20 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   plus a labelled text fallback for the other families. Zero DOM dependencies, so it
   works in plain Node.`
 
+## [0.1.1] — 2026-09-20
+
+First published release: npm packages (`@neomermaid/core`, `@neomermaid/cli`) and the
+VS Code extension. See [docs/publishing.md](./docs/publishing.md) for the credentials
+each target needs.
+
+### Added
+
+- ASCII/Unicode projection (`asciiFromSvg`, `renderAscii`, `neomermaid ascii`)
+- `layout` options with automatic direction choice
+- legibility guarantee (`contrast: aa | aaa | off`) and the `audit:legibility` tool
+- nine more palettes with light/dark pairs, and `paletteFromShiki` for importing any
+  VS Code / Shiki theme
+
 ## [Unreleased] — palettes
 
 ### Added

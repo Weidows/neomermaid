@@ -46,7 +46,7 @@ Palettes: `dracula` · `one-dark-pro` · `nord` · `gruvbox-dark` · `catppuccin
 
 | Surface | Command / install | What it is for |
 |---|---|---|
-| **VS Code extension** | `code --install-extension neomermaid-vscode-0.1.0.vsix` | Live preview beside your `.mmd` file, theme picker in the toolbar, export to PNG/SVG |
+| **VS Code extension** | `code --install-extension neomermaid-vscode-0.1.1.vsix` | Live preview beside your `.mmd` file, theme picker in the toolbar, export to PNG/SVG |
 | **CLI** | `npx @neomermaid/cli render flow.mmd -o flow.png --preset neon/dracula` | Scripts, CI and **agents** — JSON in, beautiful images out |
 | **Live demo** | [blog.weidows.tech/neomermaid](https://blog.weidows.tech/neomermaid/) | No install: edit, switch themes, export |
 

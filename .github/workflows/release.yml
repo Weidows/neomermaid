@@ -7,6 +7,8 @@ on:
 
 permissions:
   contents: write
+  # Required for npm provenance, and for Entra ID (OIDC) authentication to the
+  # Visual Studio Marketplace — neither uses a long-lived secret.
   id-token: write
 
 jobs:
@@ -14,6 +16,14 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # Marketplace authentication. `VSCE_PAT` still works today; Azure DevOps global
+      # PATs retire on 2026-12-01, and the documented replacement is Microsoft Entra ID
+      # with workload identity federation ("secure automated publishing"), which needs
+      # no stored secret at all — see docs/publishing.md.
+      VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
     steps:
       - uses: actions/checkout@v4
 
@@ -60,16 +70,50 @@ jobs:
       - name: Package the .vsix
         run: npm run package --workspace neomermaid-vscode
 
+      # ------------------------------------------------------------------ marketplace
+      # Two ways to authenticate, tried in order. Publishing is skipped (with a notice)
+      # when neither is configured, so a tag never fails just because the marketplace
+      # credentials are missing.
+
+      - name: Log in to Azure with OIDC (Entra ID)
+        if: env.VSCE_PAT == '' && env.AZURE_CLIENT_ID != ''
+        uses: azure/login@v2
+        with:
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Publish to the Marketplace with Entra ID
+        if: env.VSCE_PAT == '' && env.AZURE_CLIENT_ID != ''
+        run: >-
+          npx --yes @vscode/vsce@latest publish
+          --packagePath packages/vscode/*.vsix
+          --azure-credential
+
+      - name: Publish to the Marketplace with a PAT
+        if: env.VSCE_PAT != ''
+        run: >-
+          npx --yes @vscode/vsce@latest publish
+          --packagePath packages/vscode/*.vsix
+          --pat "$VSCE_PAT"
+
+      - name: Marketplace skip notice
+        if: env.VSCE_PAT == '' && env.AZURE_CLIENT_ID == ''
+        run: |
+          echo "Neither VSCE_PAT nor AZURE_CLIENT_ID is configured — the .vsix was built and"
+          echo "attached to the release, but not published to the Marketplace."
+          echo "See docs/publishing.md for the Entra ID (recommended) and PAT paths."
+
       - name: Create the GitHub release with the .vsix attached
         uses: softprops/action-gh-release@v2
         with:
-          files: packages/vscode/neomermaid-vscode-0.1.0.vsix
+          files: packages/vscode/*.vsix
           generate_release_notes: true
           body: |
             ### Install
 
-            - VS Code extension: download `neomermaid-vscode-0.1.0.vsix` below, then
-              `code --install-extension neomermaid-vscode-0.1.0.vsix`
-            - CLI / SDK: `npm install @neomermaid/cli` (or `@neomermaid/core`)
-            - Live demo: https://blog.weidows.tech/neomermaid/
-            - Docs: [theming](docs/theming.md) · [CLI](docs/cli.md) · [SDK](docs/api.md) · [VS Code](docs/vscode.md)
+            - **VS Code extension** — search for *NeoMermaid* in the Marketplace, or
+              download the `.vsix` below and run `code --install-extension <file>.vsix`
+            - **CLI / SDK** — `npm install -g @neomermaid/cli` (SDK: `@neomermaid/core`)
+            - **Live demo** — https://blog.weidows.tech/neomermaid/
+            - **Docs** — [theming](docs/theming.md) · [CLI](docs/cli.md) · [SDK](docs/api.md) · [VS Code](docs/vscode.md)

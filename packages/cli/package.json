@@ -1,6 +1,6 @@
 {
   "name": "@neomermaid/cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Command line renderer for NeoMermaid — mermaid in, beautiful SVG/PNG/PDF out. Agent friendly JSON.",
   "keywords": ["mermaid", "cli", "diagram", "svg", "png", "renderer", "theme"],
   "license": "MIT",

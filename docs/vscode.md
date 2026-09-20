@@ -8,7 +8,7 @@ themes, palettes and real exports.
 ```bash
 # from a checkout
 npm run package:vsix
-code --install-extension packages/vscode/neomermaid-vscode-0.1.0.vsix
+code --install-extension packages/vscode/neomermaid-vscode-0.1.1.vsix
 
 # or run it without packaging
 npm run build:vscode && code --extensionDevelopmentPath=<repo>/packages/vscode

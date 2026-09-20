@@ -2,15 +2,26 @@
   "name": "neomermaid-vscode",
   "displayName": "NeoMermaid",
   "description": "Beautiful, themeable mermaid preview — themes, colour schemes and export to SVG/PNG.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "weidows",
   "license": "MIT",
   "type": "module",
   "engines": {
     "vscode": "^1.85.0"
   },
-  "categories": ["Visualization", "Programming Languages", "Other"],
-  "keywords": ["mermaid", "diagram", "preview", "flowchart", "theme", "svg"],
+  "categories": [
+    "Visualization",
+    "Programming Languages",
+    "Other"
+  ],
+  "keywords": [
+    "mermaid",
+    "diagram",
+    "preview",
+    "flowchart",
+    "theme",
+    "svg"
+  ],
   "main": "./dist/extension.cjs",
   "activationEvents": [
     "onLanguage:mermaid",
@@ -25,8 +36,14 @@
     "languages": [
       {
         "id": "mermaid",
-        "aliases": ["Mermaid", "mermaid"],
-        "extensions": [".mmd", ".mermaid"],
+        "aliases": [
+          "Mermaid",
+          "mermaid"
+        ],
+        "extensions": [
+          ".mmd",
+          ".mermaid"
+        ],
         "configuration": "./language-configuration.json",
         "icon": {
           "light": "./media/preview.svg",
@@ -35,16 +52,36 @@
       }
     ],
     "commands": [
-      { "command": "neomermaid.openPreview", "title": "NeoMermaid: Open Preview", "icon": "$(open-preview)" },
+      {
+        "command": "neomermaid.openPreview",
+        "title": "NeoMermaid: Open Preview",
+        "icon": "$(open-preview)"
+      },
       {
         "command": "neomermaid.openPreviewToSide",
         "title": "NeoMermaid: Open Preview to the Side",
         "icon": "$(open-preview)"
       },
-      { "command": "neomermaid.exportPng", "title": "NeoMermaid: Export as PNG", "icon": "$(file-media)" },
-      { "command": "neomermaid.exportSvg", "title": "NeoMermaid: Export as SVG", "icon": "$(file-code)" },
-      { "command": "neomermaid.copySvg", "title": "NeoMermaid: Copy SVG to Clipboard", "icon": "$(clippy)" },
-      { "command": "neomermaid.choosePreset", "title": "NeoMermaid: Choose Theme & Palette", "icon": "$(color-mode)" }
+      {
+        "command": "neomermaid.exportPng",
+        "title": "NeoMermaid: Export as PNG",
+        "icon": "$(file-media)"
+      },
+      {
+        "command": "neomermaid.exportSvg",
+        "title": "NeoMermaid: Export as SVG",
+        "icon": "$(file-code)"
+      },
+      {
+        "command": "neomermaid.copySvg",
+        "title": "NeoMermaid: Copy SVG to Clipboard",
+        "icon": "$(clippy)"
+      },
+      {
+        "command": "neomermaid.choosePreset",
+        "title": "NeoMermaid: Choose Theme & Palette",
+        "icon": "$(color-mode)"
+      }
     ],
     "menus": {
       "editor/title": [
@@ -67,10 +104,22 @@
         }
       ],
       "commandPalette": [
-        { "command": "neomermaid.exportPng", "when": "editorLangId == mermaid" },
-        { "command": "neomermaid.exportSvg", "when": "editorLangId == mermaid" },
-        { "command": "neomermaid.copySvg", "when": "editorLangId == mermaid" },
-        { "command": "neomermaid.choosePreset", "when": "editorLangId == mermaid" }
+        {
+          "command": "neomermaid.exportPng",
+          "when": "editorLangId == mermaid"
+        },
+        {
+          "command": "neomermaid.exportSvg",
+          "when": "editorLangId == mermaid"
+        },
+        {
+          "command": "neomermaid.copySvg",
+          "when": "editorLangId == mermaid"
+        },
+        {
+          "command": "neomermaid.choosePreset",
+          "when": "editorLangId == mermaid"
+        }
       ]
     },
     "keybindings": [
@@ -141,13 +190,19 @@
   },
   "scripts": {
     "build": "node ../../scripts/build-vscode.mjs",
-    "package": "npx --yes @vscode/vsce@latest package --no-dependencies --out neomermaid-vscode-0.1.0.vsix",
+    "package": "npx --yes @vscode/vsce@latest package --no-dependencies",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "smoke": "node scripts/webview-smoke.mjs",
     "smoke:host": "node scripts/host-smoke.mjs",
     "verify": "npm run typecheck && npm run build && npm run smoke:host && npm run smoke"
   },
-  "files": ["dist", "media", "language-configuration.json", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "media",
+    "language-configuration.json",
+    "README.md",
+    "LICENSE"
+  ],
   "dependencies": {
     "@neomermaid/core": "0.1.0"
   },
