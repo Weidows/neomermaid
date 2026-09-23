@@ -1,6 +1,6 @@
 {
   "name": "neomermaid",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "description": "Modern, themeable Mermaid renderer — SDK + VS Code extension + CLI + live demo",
   "homepage": "https://weidows.github.io/neomermaid/",

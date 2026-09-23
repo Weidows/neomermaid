@@ -1,6 +1,6 @@
 {
   "name": "@neomermaid/core",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Themable Mermaid renderer core: theme engine, palettes and SVG post-processing.",
   "keywords": ["mermaid", "diagram", "flowchart", "theme", "svg", "renderer"],
   "license": "MIT",
