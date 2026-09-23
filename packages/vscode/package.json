@@ -214,5 +214,6 @@
     "type": "git",
     "url": "git+https://github.com/Weidows/neomermaid.git",
     "directory": "packages/vscode"
-  }
+  },
+  "icon": "media/icon.png"
 }

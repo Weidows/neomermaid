@@ -5,7 +5,20 @@ import { parseArgs, reader } from './args.js';
 import { coreBundlePath, coreBundleSize, withPilot, type Pilot, type RenderOutcome } from './renderer.js';
 import { findBrowsers } from './browser.js';
 
-const VERSION = '0.1.1';
+/**
+ * Read the version from the installed package instead of a literal. The literal
+ * drifted on every version bump — a published CLI reported the previous release's
+ * version twice — and this cannot drift by construction. Falls back to a value that
+ * is obviously wrong rather than a plausible one.
+ */
+const VERSION = (() => {
+  try {
+    const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as { version?: string };
+    return pkg.version ?? '0.0.0-unknown';
+  } catch {
+    return '0.0.0-unknown';
+  }
+})();
 
 type OutputFormat = 'svg' | 'png' | 'pdf' | 'html';
 
