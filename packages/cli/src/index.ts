@@ -5,7 +5,7 @@ import { parseArgs, reader } from './args.js';
 import { coreBundlePath, coreBundleSize, withPilot, type Pilot, type RenderOutcome } from './renderer.js';
 import { findBrowsers } from './browser.js';
 
-const VERSION = '0.1.0';
+const VERSION = '0.1.1';
 
 type OutputFormat = 'svg' | 'png' | 'pdf' | 'html';
 
