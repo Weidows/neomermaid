@@ -2,7 +2,7 @@
   "name": "neomermaid-vscode",
   "displayName": "NeoMermaid",
   "description": "Beautiful, themeable mermaid preview — themes, colour schemes and export to SVG/PNG.",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "publisher": "weidows",
   "license": "MIT",
   "type": "module",
