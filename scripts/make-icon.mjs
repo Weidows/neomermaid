@@ -67,6 +67,7 @@ const svg = (px) => `<svg xmlns="http://www.w3.org/2000/svg" width="${px}" heigh
   <!-- the node everything flows into -->
   <rect x="154" y="104" width="76" height="48" rx="13" fill="url(#accent)" filter="url(#glow)"/>
 </svg>
+`;
 function findBrowser() {
   const candidates = [
     process.env.NEOMMERMAID_BROWSER,
