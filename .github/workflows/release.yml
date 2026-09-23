@@ -15,7 +15,9 @@ jobs:
   release:
     runs-on: ubuntu-latest
     env:
-      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # npm deliberately has NO token here: npm only uses OIDC when no auth env var is
+      # present, and a stored token would silently take precedence over trusted
+      # publishing. Authentication is OIDC via `id-token: write`.
       # Marketplace authentication. `VSCE_PAT` still works today; Azure DevOps global
       # PATs retire on 2026-12-01, and the documented replacement is Microsoft Entra ID
       # with workload identity federation ("secure automated publishing"), which needs
@@ -48,32 +50,48 @@ jobs:
           [ "$TAG" = "$CORE" ] || { echo "tag does not match @neomermaid/core version"; exit 1; }
           [ "$TAG" = "$CLI" ] || { echo "tag does not match @neomermaid/cli version"; exit 1; }
 
-      - name: Publish @neomermaid/core
-        if: env.NPM_TOKEN != ''
-        run: npm publish --workspace @neomermaid/core --access public --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ env.NPM_TOKEN }}
+      # Trusted publishing needs npm >= 11.5.1, which the Node 22 image does not ship.
+      # Upgrade *after* `npm ci` so dependency install scripts run under the image's npm.
+      - name: Use an npm with trusted-publishing support
+        run: |
+          npm install -g npm@^11.5.1
+          npm --version
 
-      - name: Publish @neomermaid/cli
-        if: env.NPM_TOKEN != ''
-        run: npm publish --workspace @neomermaid/cli --access public --provenance
-        env:
-          NODE_AUTH_TOKEN: ${{ env.NPM_TOKEN }}
-
-      - name: NPM_TOKEN is missing
-        if: env.NPM_TOKEN == ''
+      # Idempotent: re-running a tag (or moving it) must not fail on an existing version.
+      - name: Which packages still need publishing
+        id: pending
         shell: bash
         run: |
-          echo "::warning::NPM_TOKEN is empty — nothing was published."
-          echo "A registered secret whose value is blank expands to '' here, which is why"
-          echo "this gate exists: check with"
-          echo "  gh api repos/$GITHUB_REPOSITORY/actions/secrets --jq '.secrets[].name'"
-          echo "then re-set it (npmjs.com -> Access Tokens -> Granular, scope @neomermaid,"
-          echo "Read and write, bypass 2FA) via: gh secret set NPM_TOKEN"
-          echo "See docs/publishing.md. A tag release fails here on purpose: a tag that"
-          echo "silently does not publish is worse than a red run."
-          # A tag release is meant to publish; a manual dry run is not.
-          if [ "$GITHUB_EVENT_NAME" = "push" ]; then exit 1; fi
+          V=$(node -p "require('./packages/core/package.json').version")
+          pending=""
+          for pkg in core cli; do
+            if npm view "@neomermaid/$pkg@$V" version >/dev/null 2>&1; then
+              echo "@neomermaid/$pkg@$V is already on the registry — skipping"
+            else
+              pending="$pending $pkg"
+            fi
+          done
+          echo "pending=$pending" >> "$GITHUB_OUTPUT"
+          echo "pending:$pending"
+
+      - name: Publish @neomermaid/core
+        if: contains(steps.pending.outputs.pending, 'core')
+        run: npm publish --workspace @neomermaid/core --access public --provenance
+
+      - name: Publish @neomermaid/cli
+        if: contains(steps.pending.outputs.pending, 'cli')
+        run: npm publish --workspace @neomermaid/cli --access public --provenance
+
+      - name: npm publish failed — how to fix it
+        if: failure() && (contains(steps.pending.outputs.pending, 'core') || contains(steps.pending.outputs.pending, 'cli'))
+        shell: bash
+        run: |
+          echo "::error::npm publish failed. If the log says ENEEDAUTH or 404 on a scoped package:"
+          echo "  npmjs.com -> the package -> Settings -> Trusted Publisher -> GitHub Actions"
+          echo "  owner: Weidows   repository: neomermaid   workflow: release.yml   allow: npm publish"
+          echo "  the workflow filename is part of the trust contract — renaming it breaks publishing"
+          echo "  a version's FIRST release cannot be published by OIDC; bootstrap it by hand"
+          echo "See docs/publishing.md."
 
       - name: Build the VS Code extension
         run: node scripts/build-vscode.mjs
@@ -111,9 +129,10 @@ jobs:
       - name: Marketplace skip notice
         if: env.VSCE_PAT == '' && env.AZURE_CLIENT_ID == ''
         run: |
-          echo "Neither VSCE_PAT nor AZURE_CLIENT_ID is configured — the .vsix was built and"
-          echo "attached to the release, but not published to the Marketplace."
-          echo "See docs/publishing.md for the Entra ID (recommended) and PAT paths."
+          echo "Not publishing to the Marketplace (no VSCE_PAT or AZURE_CLIENT_ID)."
+          echo "The .vsix is attached to this release instead — upload it by hand at"
+          echo "https://marketplace.visualstudio.com/manage (no credentials needed)."
+          echo "See docs/publishing.md for the PAT and Entra ID automation paths."
 
       - name: Create the GitHub release with the .vsix attached
         uses: softprops/action-gh-release@v2

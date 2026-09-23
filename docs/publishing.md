@@ -7,13 +7,26 @@ release** — the workflow skips that step and says so.
 
 | target | authentication | status |
 | --- | --- | --- |
-| `@neomermaid/core`, `@neomermaid/cli` | `NPM_TOKEN` secret (+ `--provenance`, no key needed for *verification*) | wired, needs the secret |
-| VS Code Marketplace | `VSCE_PAT` secret **or** Microsoft Entra ID via OIDC (no secret) | workflow supports both, neither configured yet |
+| `@neomermaid/core`, `@neomermaid/cli` | **OIDC trusted publishing — no secret at all** | live: 0.1.1 published, workflow publishes future tags with provenance |
+| VS Code Marketplace | `VSCE_PAT` secret **or** Microsoft Entra ID via OIDC | neither configured; **uploading the .vsix by hand needs no credentials** and is a legitimate way to ship |
 
 ## npm
 
+Publishing is tokenless. The workflow relies on OIDC (`id-token: write` + `registry-url`)
+and npm's trusted publisher for this repository; **do not add a token secret**, because npm
+falls back to token auth whenever an auth env var is present and OIDC then never engages.
+
+Bootstrap (once per package, already done for 0.1.1): a version's **first** release cannot
+be published by OIDC, because the trusted publisher can only be configured on a package
+that already exists. Publish the first version by hand (`npm login --registry=https://registry.npmjs.org`
+then `npm publish --access public`, with an OTP), configure the trusted publisher, and every
+version after that is automatic.
+
+Historical note: the previous `NPM_TOKEN` secret held a **classic token**, which npm revoked
+permanently on 2025-12-09 — that is what produced a 404 on `PUT` for a scoped package.
 ```bash
-gh secret set NPM_TOKEN --repo Weidows/neomermaid
+# not needed any more; kept for reference only
+# gh secret set NPM_TOKEN --repo Weidows/neomermaid
 ```
 
 Verify the secret actually reaches a workflow before trusting a release: a registered
