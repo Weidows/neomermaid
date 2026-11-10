@@ -145,5 +145,5 @@ jobs:
             - **VS Code extension** — search for *NeoMermaid* in the Marketplace, or
               download the `.vsix` below and run `code --install-extension <file>.vsix`
             - **CLI / SDK** — `npm install -g @neomermaid/cli` (SDK: `@neomermaid/core`)
-            - **Live demo** — https://blog.weidows.tech/neomermaid/
+            - **Live demo** — https://weidows.github.io/neomermaid/
             - **Docs** — [theming](docs/theming.md) · [CLI](docs/cli.md) · [SDK](docs/api.md) · [VS Code](docs/vscode.md)

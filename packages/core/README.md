@@ -126,7 +126,7 @@ Node — no DOM, no browser.
   [Layout](https://github.com/Weidows/neomermaid/blob/main/docs/layout.md) ·
   [Contrast](https://github.com/Weidows/neomermaid/blob/main/docs/contrast.md) ·
   [SDK](https://github.com/Weidows/neomermaid/blob/main/docs/api.md)
-- **Live demo** — https://blog.weidows.tech/neomermaid/
+- **Live demo** — https://weidows.github.io/neomermaid/
 - **VS Code extension** — NeoMermaid (live preview, theme picker, export to PNG/SVG)
 
 ## License

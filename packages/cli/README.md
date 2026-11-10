@@ -89,7 +89,7 @@ caller never has to parse prose.
   [Layout](https://github.com/Weidows/neomermaid/blob/main/docs/layout.md) ·
   [Contrast](https://github.com/Weidows/neomermaid/blob/main/docs/contrast.md)
 - **SDK** — [`@neomermaid/core`](https://www.npmjs.com/package/@neomermaid/core)
-- **Live demo** — https://blog.weidows.tech/neomermaid/
+- **Live demo** — https://weidows.github.io/neomermaid/
 - **VS Code extension** — NeoMermaid (live preview, theme picker, export to PNG/SVG)
 
 ## License
